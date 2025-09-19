@@ -20,22 +20,32 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, UploadCloud, Loader2 } from 'lucide-react'; // Import Loader2 for loading state
+import { Separator } from '@/components/ui/separator'; // Import Separator
 
 const profileFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
   last_name: z.string().min(1, { message: 'Last name is required.' }).optional().or(z.literal('')),
-  // avatar_url is now managed by the upload logic, not directly by form input
+});
+
+const passwordFormSchema = z.object({
+  new_password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  confirm_password: z.string(),
+}).refine((data) => data.new_password === data.confirm_password, {
+  message: "Passwords don't match.",
+  path: ["confirm_password"],
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 const ProfileForm = () => {
   const { user, profile, isLoading: isSessionLoading } = useSession();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
+  const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const form = useForm<ProfileFormValues>({
+  const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       first_name: '',
@@ -43,22 +53,30 @@ const ProfileForm = () => {
     },
   });
 
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      new_password: '',
+      confirm_password: '',
+    },
+  });
+
   useEffect(() => {
     if (profile && !isSessionLoading) {
-      form.reset({
+      profileForm.reset({
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
       });
     }
-  }, [profile, isSessionLoading, form]);
+  }, [profile, isSessionLoading, profileForm]);
 
-  const onSubmit = async (values: ProfileFormValues) => {
+  const onProfileSubmit = async (values: ProfileFormValues) => {
     if (!user) {
       showError('You must be logged in to update your profile.');
       return;
     }
 
-    setIsSubmitting(true);
+    setIsProfileSubmitting(true);
     const { error } = await supabase
       .from('profiles')
       .update({
@@ -75,7 +93,28 @@ const ProfileForm = () => {
       showSuccess('Profile updated successfully!');
       // Optionally, trigger a session refresh or re-fetch profile in SessionContextProvider
     }
-    setIsSubmitting(false);
+    setIsProfileSubmitting(false);
+  };
+
+  const onPasswordSubmit = async (values: PasswordFormValues) => {
+    if (!user) {
+      showError('You must be logged in to change your password.');
+      return;
+    }
+
+    setIsPasswordSubmitting(true);
+    const { error } = await supabase.auth.updateUser({
+      password: values.new_password,
+    });
+
+    if (error) {
+      console.error('Error updating password:', error);
+      showError(`Failed to update password: ${error.message}`);
+    } else {
+      showSuccess('Password updated successfully!');
+      passwordForm.reset(); // Clear password fields
+    }
+    setIsPasswordSubmitting(false);
   };
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,79 +194,117 @@ const ProfileForm = () => {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex flex-col items-center gap-4">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={profile.avatar_url || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
-            <AvatarFallback>
-              <UserIcon className="h-12 w-12 text-gray-400" />
-            </AvatarFallback>
-          </Avatar>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {user.email}
-          </p>
-          <div className="relative">
-            <Input
-              type="file"
-              id="avatar-upload"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-              disabled={isUploadingAvatar}
-              ref={fileInputRef}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingAvatar}
-              className="flex items-center gap-2"
-            >
-              {isUploadingAvatar ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
-                </>
-              ) : (
-                <>
-                  <UploadCloud className="h-4 w-4" /> Upload Avatar
-                </>
-              )}
-            </Button>
+    <div className="space-y-8">
+      <Form {...profileForm}>
+        <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src={profile.avatar_url || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
+              <AvatarFallback>
+                <UserIcon className="h-12 w-12 text-gray-400" />
+              </AvatarFallback>
+            </Avatar>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {user.email}
+            </p>
+            <div className="relative">
+              <Input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                disabled={isUploadingAvatar}
+                ref={fileInputRef}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingAvatar}
+                className="flex items-center gap-2"
+              >
+                {isUploadingAvatar ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="h-4 w-4" /> Upload Avatar
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-        <FormField
-          control={form.control}
-          name="first_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your first name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="last_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Your last name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Removed avatar_url direct input as it's now handled by file upload */}
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : 'Update Profile'}
-        </Button>
-      </form>
-    </Form>
+          <FormField
+            control={profileForm.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your first name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={profileForm.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your last name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full" disabled={isProfileSubmitting}>
+            {isProfileSubmitting ? 'Saving...' : 'Update Profile'}
+          </Button>
+        </form>
+      </Form>
+
+      <Separator />
+
+      <h3 className="text-xl font-bold text-gray-800 dark:text-white">Change Password</h3>
+      <Form {...passwordForm}>
+        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
+          <FormField
+            control={passwordForm.control}
+            name="new_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Enter new password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={passwordForm.control}
+            name="confirm_password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm New Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Confirm new password" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full" disabled={isPasswordSubmitting}>
+            {isPasswordSubmitting ? 'Changing Password...' : 'Change Password'}
+          </Button>
+        </form>
+      </Form>
+    </div>
   );
 };
 
