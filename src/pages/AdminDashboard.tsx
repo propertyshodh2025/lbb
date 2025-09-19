@@ -5,6 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddProjectForm from '@/components/AddProjectForm';
+import ProjectList from '@/components/ProjectList'; // Import the new component
 
 const AdminDashboard = () => {
   const { profile, isLoading } = useSession();
@@ -61,7 +62,10 @@ const AdminDashboard = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Project</h3>
             <AddProjectForm onProjectAdded={handleProjectAdded} />
           </div>
-          {/* Project list will go here, potentially re-fetching based on projectAdded state */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
+            <ProjectList refreshTrigger={projectAdded} />
+          </div>
         </CardContent>
       </Card>
     </div>
