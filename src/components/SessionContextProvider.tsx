@@ -24,9 +24,12 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleAuthStateChange = async (event: string, currentSession: Session | null) => {
-      console.log("Auth state changed:", event, currentSession ? "Session exists" : "No session");
-      setIsLoading(true); // Set loading to true at the start of handling any auth state change
+    let isMounted = true; // Flag to prevent state updates on unmounted component
+
+    const handleSessionAndProfile = async (currentSession: Session | null) => {
+      if (!isMounted) return;
+
+      setIsLoading(true); // Set loading to true at the start of handling any session change
 
       if (currentSession) {
         setSession(currentSession);
@@ -39,10 +42,12 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           .eq('id', currentSession.user.id)
           .single();
 
+        if (!isMounted) return; // Check mount status again after async operation
+
         if (profileError) {
-          console.error("Error fetching profile on auth state change:", profileError);
+          console.error("Error fetching profile:", profileError);
           showError("Failed to load user profile.");
-          setProfile(null); // Profile is null if there's an error
+          setProfile(null);
         } else {
           setProfile(profileData);
         }
@@ -52,7 +57,7 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           navigate('/');
         }
       } else {
-        // No session (SIGNED_OUT or INITIAL_SESSION with no session)
+        // No session
         setSession(null);
         setUser(null);
         setProfile(null);
@@ -61,14 +66,29 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           navigate('/login');
         }
       }
-      setIsLoading(false); // Always set loading to false after processing the state change
+      if (isMounted) setIsLoading(false); // Always set loading to false after processing the state change
     };
 
-    // Set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+    // Fetch initial session immediately on mount
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (isMounted) {
+        handleSessionAndProfile(initialSession);
+      }
+    });
 
-    // Clean up the subscription on component unmount
-    return () => subscription.unsubscribe();
+    // Set up the auth state change listener for subsequent changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log("Auth state changed:", event, currentSession ? "Session exists" : "No session");
+      if (isMounted) {
+        handleSessionAndProfile(currentSession);
+      }
+    });
+
+    // Clean up the subscription and set isMounted to false on component unmount
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]); // Depend on navigate to ensure it's stable
 
   return (
