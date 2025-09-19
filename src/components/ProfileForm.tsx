@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,12 +19,12 @@ import { showSuccess, showError } from '@/utils/toast';
 import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon } from 'lucide-react';
+import { User as UserIcon, UploadCloud, Loader2 } from 'lucide-react'; // Import Loader2 for loading state
 
 const profileFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
   last_name: z.string().min(1, { message: 'Last name is required.' }).optional().or(z.literal('')),
-  avatar_url: z.string().url({ message: 'Must be a valid URL.' }).optional().or(z.literal('')),
+  // avatar_url is now managed by the upload logic, not directly by form input
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -32,13 +32,14 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 const ProfileForm = () => {
   const { user, profile, isLoading: isSessionLoading } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       first_name: '',
       last_name: '',
-      avatar_url: '',
     },
   });
 
@@ -47,7 +48,6 @@ const ProfileForm = () => {
       form.reset({
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
-        avatar_url: profile.avatar_url || '',
       });
     }
   }, [profile, isSessionLoading, form]);
@@ -64,7 +64,6 @@ const ProfileForm = () => {
       .update({
         first_name: values.first_name || null,
         last_name: values.last_name || null,
-        avatar_url: values.avatar_url || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', user.id);
@@ -75,15 +74,74 @@ const ProfileForm = () => {
     } else {
       showSuccess('Profile updated successfully!');
       // Optionally, trigger a session refresh or re-fetch profile in SessionContextProvider
-      // For now, relying on the SessionContextProvider's onAuthStateChange to pick up updates
     }
     setIsSubmitting(false);
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) {
+      showError('You must be logged in to upload an avatar.');
+      return;
+    }
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    try {
+      // Upload the file to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true, // Overwrite existing file if any
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL of the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      if (!publicUrlData?.publicUrl) {
+        throw new Error('Could not get public URL for avatar.');
+      }
+
+      // Update the profile table with the new avatar_url
+      const { error: updateProfileError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+
+      if (updateProfileError) {
+        throw updateProfileError;
+      }
+
+      showSuccess('Avatar uploaded successfully!');
+      // Trigger a re-fetch of the session/profile to update the UI
+      // This is handled by SessionContextProvider's onAuthStateChange
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error.message);
+      showError(`Failed to upload avatar: ${error.message}`);
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Clear the file input
+      }
+    }
   };
 
   if (isSessionLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
+        <Skeleton className="h-6 w-32 mx-auto mb-6" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -109,6 +167,34 @@ const ProfileForm = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {user.email}
           </p>
+          <div className="relative">
+            <Input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+              disabled={isUploadingAvatar}
+              ref={fileInputRef}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="flex items-center gap-2"
+            >
+              {isUploadingAvatar ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="h-4 w-4" /> Upload Avatar
+                </>
+              )}
+            </Button>
+          </div>
         </div>
         <FormField
           control={form.control}
@@ -136,19 +222,7 @@ const ProfileForm = () => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="avatar_url"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Avatar URL</FormLabel>
-              <FormControl>
-                <Input placeholder="URL to your avatar image" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Removed avatar_url direct input as it's now handled by file upload */}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Update Profile'}
         </Button>
