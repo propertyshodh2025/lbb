@@ -6,6 +6,8 @@ import { showError } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
+import { useSession } from '@/components/SessionContextProvider'; // Import useSession
+import UpdateProjectStatusForm from './UpdateProjectStatusForm'; // Import the new component
 
 interface Project {
   id: string;
@@ -25,11 +27,13 @@ interface Project {
 interface ProjectListProps {
   refreshTrigger?: boolean; // Prop to trigger re-fetch
   filterByClientId?: string | null; // New prop to filter projects by client ID
+  onProjectUpdated?: () => void; // Callback for when a project is updated
 }
 
-const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListProps) => {
+const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated }: ProjectListProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { profile, isLoading: isSessionLoading } = useSession(); // Get session and profile
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -68,7 +72,7 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListPro
     fetchProjects();
   }, [refreshTrigger, filterByClientId]); // Re-fetch when refreshTrigger or filterByClientId changes
 
-  if (isLoading) {
+  if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-24 w-full" />
@@ -83,6 +87,8 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListPro
       <p className="text-center text-gray-500 dark:text-gray-400">No projects found.</p>
     );
   }
+
+  const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';
 
   return (
     <div className="space-y-4">
@@ -99,7 +105,7 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListPro
               <p className="text-gray-700 dark:text-gray-300">{project.description}</p>
             )}
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Status: <span className="font-medium capitalize">{project.current_status}</span>
+              Current Status: <span className="font-medium capitalize">{project.current_status}</span>
             </p>
             {project.due_date && (
               <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -108,6 +114,15 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListPro
             )}
             {project.notes && (
               <p className="text-sm text-gray-600 dark:text-gray-400">Notes: {project.notes}</p>
+            )}
+            {canManageProjects && (
+              <div className="pt-4">
+                <UpdateProjectStatusForm
+                  projectId={project.id}
+                  currentStatus={project.current_status}
+                  onStatusUpdated={onProjectUpdated || (() => {})} // Pass callback
+                />
+              </div>
             )}
           </CardContent>
         </Card>

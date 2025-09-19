@@ -9,10 +9,10 @@ import ProjectList from '@/components/ProjectList'; // Import the new component
 
 const AdminDashboard = () => {
   const { profile, isLoading } = useSession();
-  const [projectAdded, setProjectAdded] = useState(false); // State to trigger project list refresh
+  const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(false); // State to trigger project list refresh
 
-  const handleProjectAdded = () => {
-    setProjectAdded(!projectAdded); // Toggle to trigger a re-fetch or re-render of project list
+  const handleProjectChange = () => {
+    setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to trigger a re-fetch or re-render of project list
   };
 
   if (isLoading) {
@@ -60,11 +60,11 @@ const AdminDashboard = () => {
           </p>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Project</h3>
-            <AddProjectForm onProjectAdded={handleProjectAdded} />
+            <AddProjectForm onProjectAdded={handleProjectChange} />
           </div>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
-            <ProjectList refreshTrigger={projectAdded} />
+            <ProjectList refreshTrigger={projectRefreshTrigger} onProjectUpdated={handleProjectChange} />
           </div>
         </CardContent>
       </Card>
