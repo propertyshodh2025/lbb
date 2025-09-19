@@ -13,7 +13,8 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import EditorDashboard from "./pages/EditorDashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import RoleBasedRedirect from "./pages/RoleBasedRedirect";
-import ProfilePage from "./pages/ProfilePage"; // Import the new ProfilePage
+import ProfilePage from "./pages/ProfilePage";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage"; // Import the new ProjectDetailsPage
 
 const queryClient = new QueryClient();
 
@@ -31,7 +32,8 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<RoleBasedRedirect />} />
-                  <Route path="/profile" element={<ProfilePage />} /> {/* New Profile Page Route */}
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/projects/:id" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ProjectDetailsPage /></ProtectedRoute>} /> {/* New Project Details Page Route */}
                   <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
                   <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
                   <Route path="/editor" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><EditorDashboard /></ProtectedRoute>} />

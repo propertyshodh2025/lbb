@@ -42,12 +42,13 @@ interface Editor {
 interface TaskListProps {
   refreshTrigger?: boolean; // Prop to trigger re-fetch
   filterByAssignedTo?: string | null; // Optional: filter tasks by assigned editor ID
+  filterByProjectId?: string | null; // New: Optional filter tasks by project ID
   onTaskUpdated?: () => void; // Callback for when a task is updated
 }
 
 const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
 
-const TaskList = ({ refreshTrigger, filterByAssignedTo = null, onTaskUpdated }: TaskListProps) => {
+const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId = null, onTaskUpdated }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +96,9 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, onTaskUpdated }: 
       if (filterByAssignedTo) {
         query = query.eq('assigned_to', filterByAssignedTo);
       }
+      if (filterByProjectId) {
+        query = query.eq('project_id', filterByProjectId);
+      }
 
       const { data: tasksData, error: tasksError } = await query;
 
@@ -123,7 +127,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, onTaskUpdated }: 
     };
 
     fetchTasksAndEditors();
-  }, [refreshTrigger, filterByAssignedTo, isSessionLoading]); // Re-fetch when refreshTrigger, filter, or session loading changes
+  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading]); // Re-fetch when refreshTrigger, filters, or session loading changes
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const { error } = await supabase

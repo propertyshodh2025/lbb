@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useSession } from '@/components/SessionContextProvider'; // Import useSession
 import UpdateProjectStatusForm from './UpdateProjectStatusForm'; // Import the new component
+import { Link } from 'react-router-dom'; // Import Link
 
 interface Project {
   id: string;
@@ -95,7 +96,11 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
       {projects.map((project) => (
         <Card key={project.id} className="shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">{project.title}</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              <Link to={`/projects/${project.id}`} className="hover:underline text-primary dark:text-primary-foreground">
+                {project.title}
+              </Link>
+            </CardTitle>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Client: {project.profiles ? `${project.profiles.first_name} ${project.profiles.last_name}` : 'N/A'}
             </p>

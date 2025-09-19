@@ -43,17 +43,31 @@ interface Editor {
   last_name: string;
 }
 
-const AddTaskForm = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
+interface AddTaskFormProps {
+  onTaskAdded: () => void;
+  defaultProjectId?: string; // New optional prop
+}
+
+const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      project_id: '',
+      project_id: defaultProjectId || '', // Use defaultProjectId if provided
       title: '',
       assigned_to: '',
     },
   });
+
+  // Reset form with defaultProjectId if it changes
+  useEffect(() => {
+    form.reset({
+      project_id: defaultProjectId || '',
+      title: '',
+      assigned_to: '',
+    });
+  }, [defaultProjectId, form]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,7 +113,11 @@ const AddTaskForm = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
       showError('Failed to add task.');
     } else {
       showSuccess('Task added successfully!');
-      form.reset();
+      form.reset({
+        project_id: defaultProjectId || '', // Reset to defaultProjectId or empty
+        title: '',
+        assigned_to: '',
+      });
       onTaskAdded(); // Notify parent component
     }
   };
@@ -113,7 +131,7 @@ const AddTaskForm = ({ onTaskAdded }: { onTaskAdded: () => void }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Project</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={!!defaultProjectId}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a project" />
