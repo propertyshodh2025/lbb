@@ -13,6 +13,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useSession } from '@/components/SessionContextProvider';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface UserProfile {
   id: string;
@@ -31,9 +44,13 @@ const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
 const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { profile: currentUserProfile, isLoading: isSessionLoading } = useSession();
+  const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
   const canEditRoles = !isSessionLoading && currentUserProfile?.role === 'admin';
+  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
+
+  const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu'; // Your Supabase Project ID
+  const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -114,6 +131,53 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!canDeleteUsers) {
+      showError('You do not have permission to delete users.');
+      return;
+    }
+
+    if (userId === currentUserProfile?.id) {
+      showError('You cannot delete your own account.');
+      return;
+    }
+
+    const adminCount = users.filter(u => u.role === 'admin').length;
+    const userToDelete = users.find(u => u.id === userId);
+
+    if (userToDelete?.role === 'admin' && adminCount <= 1) {
+      showError('Cannot delete the last admin account.');
+      return;
+    }
+
+    try {
+      // Invoke the Edge Function to delete the user from auth.users
+      const response = await fetch(DELETE_USER_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`, // Pass the user's JWT
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('Error from Edge Function:', result.error);
+        showError(`Failed to delete user "${userEmail}": ${result.error}`);
+        return;
+      }
+
+      showSuccess(`User "${userEmail}" deleted successfully!`);
+      // Trigger a refresh of the user list
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+    } catch (error) {
+      console.error('Error invoking Edge Function:', error);
+      showError(`An unexpected error occurred while deleting user "${userEmail}".`);
+    }
+  };
+
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
@@ -134,13 +198,43 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     <div className="space-y-4">
       {users.map((user) => (
         <Card key={user.id} className="shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">
               {user.first_name} {user.last_name}
             </CardTitle>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+            {canDeleteUsers && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete User</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the user
+                      "{user.first_name} {user.last_name} ({user.email})" and all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </CardHeader>
           <CardContent className="space-y-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Role:</p>
               <Select
