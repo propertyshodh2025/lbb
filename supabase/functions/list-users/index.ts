@@ -18,6 +18,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Parse query parameters
+    const url = new URL(req.url);
+    const roleFilter = url.searchParams.get('role');
+    const sortBy = url.searchParams.get('sortBy'); // e.g., 'first_name', 'email', 'role'
+    const sortOrder = url.searchParams.get('sortOrder') || 'asc'; // 'asc' or 'desc'
+
     // Fetch all users from auth.users
     const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
 
@@ -29,10 +35,16 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all profiles from public.profiles
-    const { data: profiles, error: profilesError } = await supabaseAdmin
+    // Fetch profiles, applying role filter if present
+    let profilesQuery = supabaseAdmin
       .from('profiles')
-      .select('id, first_name, last_name, role');
+      .select('id, first_name, last_name, role, avatar_url'); // Include avatar_url for consistency
+
+    if (roleFilter && roleFilter !== 'all') {
+      profilesQuery = profilesQuery.eq('role', roleFilter);
+    }
+
+    const { data: profiles, error: profilesError } = await profilesQuery;
 
     if (profilesError) {
       console.error('Error fetching profiles:', profilesError);
@@ -46,7 +58,7 @@ serve(async (req) => {
     const profilesMap = new Map(profiles.map(p => [p.id, p]));
 
     // Combine auth user data with profile data
-    const usersWithProfiles = authUsers.users.map(authUser => {
+    let usersWithProfiles = authUsers.users.map(authUser => {
       const profile = profilesMap.get(authUser.id);
       return {
         id: authUser.id,
@@ -54,8 +66,37 @@ serve(async (req) => {
         first_name: profile?.first_name || null,
         last_name: profile?.last_name || null,
         role: profile?.role || 'client', // Default role if not found in profile
+        avatar_url: profile?.avatar_url || null,
       };
     });
+
+    // Apply sorting
+    if (sortBy) {
+      usersWithProfiles.sort((a, b) => {
+        let valA: any;
+        let valB: any;
+
+        if (sortBy === 'email') {
+          valA = a.email?.toLowerCase() || '';
+          valB = b.email?.toLowerCase() || '';
+        } else if (sortBy === 'first_name') {
+          valA = a.first_name?.toLowerCase() || '';
+          valB = b.first_name?.toLowerCase() || '';
+        } else if (sortBy === 'last_name') {
+          valA = a.last_name?.toLowerCase() || '';
+          valB = b.last_name?.toLowerCase() || '';
+        } else if (sortBy === 'role') {
+          valA = a.role?.toLowerCase() || '';
+          valB = b.role?.toLowerCase() || '';
+        } else {
+          return 0; // No valid sortBy, maintain original order
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
 
     return new Response(JSON.stringify(usersWithProfiles), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

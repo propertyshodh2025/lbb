@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit } from 'lucide-react'; // Import Edit icon
+import { Trash2, Edit, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react'; // Import sorting icons
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,14 +27,14 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Dialog, // Import Dialog components
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import EditUserForm from './EditUserForm'; // Import the new EditUserForm
+import EditUserForm from './EditUserForm';
 
 interface UserProfile {
   id: string;
@@ -42,39 +42,55 @@ interface UserProfile {
   last_name: string | null;
   role: string;
   email: string;
-  avatar_url: string | null; // Add avatar_url to UserProfile
+  avatar_url: string | null;
 }
 
 interface UserManagementListProps {
   refreshTrigger?: boolean;
 }
 
-const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
+const USER_ROLES_FILTER = ['all', 'admin', 'manager', 'editor', 'client'];
+const SORT_OPTIONS = [
+  { value: 'first_name', label: 'First Name' },
+  { value: 'last_name', label: 'Last Name' },
+  { value: 'email', label: 'Email' },
+  { value: 'role', label: 'Role' },
+];
+
+const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
+const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
+const LIST_USERS_FUNCTION_BASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/list-users`;
 
 const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
-  const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null); // State to hold user being edited
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null);
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
-  // canEditRoles is now implicitly handled by EditUserForm's internal logic for disabling own role
-  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin'; // Only admins can edit user details
-  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('first_name');
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
 
-  const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu'; // Your Supabase Project ID
-  const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
-  const LIST_USERS_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/list-users`; // New Edge Function URL
+  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
+  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
 
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(LIST_USERS_FUNCTION_URL, {
+        const url = new URL(LIST_USERS_FUNCTION_BASE_URL);
+        if (selectedRoleFilter !== 'all') {
+          url.searchParams.append('role', selectedRoleFilter);
+        }
+        url.searchParams.append('sortBy', sortBy);
+        url.searchParams.append('sortOrder', sortOrder);
+
+        const response = await fetch(url.toString(), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`, // Pass the user's JWT
+            'Authorization': `Bearer ${session?.access_token}`,
           },
         });
 
@@ -98,9 +114,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     };
 
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen]); // Depend on session.access_token and isEditDialogOpen
-
-  // Removed handleRoleChange as role editing is now part of EditUserForm
+  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, selectedRoleFilter, sortBy, sortOrder]);
 
   const handleDeleteUser = async (userId: string, userEmail: string) => {
     if (!canDeleteUsers) {
@@ -122,12 +136,11 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     }
 
     try {
-      // Invoke the Edge Function to delete the user from auth.users
       const response = await fetch(DELETE_USER_FUNCTION_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`, // Pass the user's JWT
+          'Authorization': `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({ userId }),
       });
@@ -141,7 +154,6 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
       }
 
       showSuccess(`User "${userEmail}" deleted successfully!`);
-      // Trigger a refresh of the user list
       setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
     } catch (error) {
       console.error('Error invoking Edge Function:', error);
@@ -155,12 +167,13 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   };
 
   const handleUserUpdated = () => {
-    // Trigger a refresh of the user list
-    // This will cause the useEffect to re-fetch users, including updated profile data
-    setUsers([]); // Clear current users to force re-fetch
-    setIsLoading(true); // Set loading state
-    // The useEffect will handle the actual fetching
-    setIsEditDialogOpen(false); // Close the dialog
+    setUsers([]);
+    setIsLoading(true);
+    setIsEditDialogOpen(false);
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
   };
 
   if (isLoading || isSessionLoading) {
@@ -181,6 +194,43 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+        <div className="flex-1">
+          <label htmlFor="role-filter" className="sr-only">Filter by Role</label>
+          <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
+            <SelectTrigger id="role-filter" className="w-full">
+              <SelectValue placeholder="Filter by Role" />
+            </SelectTrigger>
+            <SelectContent>
+              {USER_ROLES_FILTER.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 flex items-center gap-2">
+          <label htmlFor="sort-by" className="sr-only">Sort By</label>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger id="sort-by" className="flex-1">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0">
+            {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
+            <span className="sr-only">Toggle sort order</span>
+          </Button>
+        </div>
+      </div>
+
       {users.map((user) => (
         <Card key={user.id} className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -250,8 +300,8 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
                 first_name: currentUserToEdit.first_name || '',
                 last_name: currentUserToEdit.last_name || '',
                 avatar_url: currentUserToEdit.avatar_url || '',
-                email: currentUserToEdit.email, // Pass email for display
-                role: currentUserToEdit.role, // Pass role for editing
+                email: currentUserToEdit.email,
+                role: currentUserToEdit.role,
               }}
               onUserUpdated={handleUserUpdated}
               onClose={() => setIsEditDialogOpen(false)}
