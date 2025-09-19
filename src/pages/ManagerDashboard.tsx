@@ -8,14 +8,24 @@ import AddTaskForm from '@/components/AddTaskForm';
 import TaskList from '@/components/TaskList';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, ListChecks, PlusCircle } from 'lucide-react'; // Import ListChecks and PlusCircle icons
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
   const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false); // State to trigger task list re-fetch
+  const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
   const handleTaskChange = () => {
     setTaskRefreshTrigger(!taskRefreshTrigger); // Toggle to trigger a re-fetch or re-render of task list
+    setIsAddTaskDialogOpen(false); // Close the dialog
   };
 
   if (isLoading) {
@@ -72,12 +82,30 @@ const ManagerDashboard = () => {
           </div>
 
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Task</h3>
-            <AddTaskForm onTaskAdded={handleTaskChange} />
-          </div>
-          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Tasks</h3>
-            <TaskList refreshTrigger={taskRefreshTrigger} onTaskUpdated={handleTaskChange} />
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Task Actions</h3>
+            <div className="space-y-4">
+              <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Task</DialogTitle>
+                    <DialogDescription>
+                      Fill in the details to create a new task.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddTaskForm onTaskAdded={handleTaskChange} />
+                </DialogContent>
+              </Dialog>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/tasks">
+                  <ListChecks className="mr-2 h-4 w-4" /> View All Tasks
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
