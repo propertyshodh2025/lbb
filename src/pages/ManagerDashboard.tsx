@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import AddTaskForm from '@/components/AddTaskForm'; // Import the new component
+import AddTaskForm from '@/components/AddTaskForm';
+import TaskList from '@/components/TaskList'; // Import the new component
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
@@ -61,7 +62,10 @@ const ManagerDashboard = () => {
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Task</h3>
             <AddTaskForm onTaskAdded={handleTaskAdded} />
           </div>
-          {/* Task list will go here, potentially re-fetching based on taskAdded state */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Tasks</h3>
+            <TaskList refreshTrigger={taskAdded} />
+          </div>
         </CardContent>
       </Card>
     </div>

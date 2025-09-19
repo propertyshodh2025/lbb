@@ -1,12 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import TaskList from '@/components/TaskList'; // Import the new component
 
 const EditorDashboard = () => {
-  const { profile, isLoading } = useSession();
+  const { profile, isLoading, user } = useSession();
+  const [taskUpdated, setTaskUpdated] = useState(false); // State to trigger task list refresh
+
+  // This function would be called if an editor updates a task, e.g., changes status
+  const handleTaskUpdated = () => {
+    setTaskUpdated(!taskUpdated); // Toggle to trigger a re-fetch or re-render of task list
+  };
 
   if (isLoading) {
     return (
@@ -48,10 +55,14 @@ const EditorDashboard = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">Your personal Kanban board for assigned tasks.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-gray-700 dark:text-gray-300">
-            Welcome, Editor! This will be your personal board to track tasks assigned to you.
+          <p className="text-gray-700 dark:text-gray-300 mb-6">
+            Welcome, {profile?.first_name || 'Editor'}! Here are the tasks assigned to you.
           </p>
-          {/* Editor specific content (Kanban board) will go here */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">My Assigned Tasks</h3>
+            {user && <TaskList refreshTrigger={taskUpdated} filterByAssignedTo={user.id} />}
+            {!user && <p className="text-center text-gray-500 dark:text-gray-400">Please log in to view your tasks.</p>}
+          </div>
         </CardContent>
       </Card>
     </div>
