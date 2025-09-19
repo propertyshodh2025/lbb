@@ -58,7 +58,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null); // State to hold user being edited
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
-  const canEditRoles = !isSessionLoading && currentUserProfile?.role === 'admin';
+  // canEditRoles is now implicitly handled by EditUserForm's internal logic for disabling own role
   const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin'; // Only admins can edit user details
   const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
 
@@ -100,39 +100,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     fetchUsers();
   }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen]); // Depend on session.access_token and isEditDialogOpen
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    if (!canEditRoles) {
-      showError('You do not have permission to change roles.');
-      return;
-    }
-
-    // Prevent admin from changing their own role or demoting the last admin
-    if (userId === currentUserProfile?.id && newRole !== 'admin') {
-      const adminCount = users.filter(u => u.role === 'admin').length;
-      if (adminCount <= 1) {
-        showError('Cannot demote the last admin.');
-        return;
-      }
-    }
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ role: newRole })
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error updating user role:', error);
-      showError('Failed to update user role.');
-    } else {
-      showSuccess('User role updated successfully!');
-      // Optimistically update UI or trigger a refresh
-      setUsers(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-    }
-  };
+  // Removed handleRoleChange as role editing is now part of EditUserForm
 
   const handleDeleteUser = async (userId: string, userEmail: string) => {
     if (!canDeleteUsers) {
@@ -260,25 +228,9 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Role:</p>
-              <Select
-                value={user.role}
-                onValueChange={(value) => handleRoleChange(user.id, value)}
-                disabled={!canEditRoles || user.id === currentUserProfile?.id} // Disable changing own role
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {USER_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Role: <span className="font-medium capitalize">{user.role}</span>
+            </p>
           </CardContent>
         </Card>
       ))}
@@ -299,6 +251,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
                 last_name: currentUserToEdit.last_name || '',
                 avatar_url: currentUserToEdit.avatar_url || '',
                 email: currentUserToEdit.email, // Pass email for display
+                role: currentUserToEdit.role, // Pass role for editing
               }}
               onUserUpdated={handleUserUpdated}
               onClose={() => setIsEditDialogOpen(false)}

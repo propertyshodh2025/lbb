@@ -14,15 +14,24 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon } from 'lucide-react';
+import { useSession } from '@/components/SessionContextProvider'; // Import useSession
 
 const editUserFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
   last_name: z.string().min(1, { message: 'Last name is required.' }).optional().or(z.literal('')),
   avatar_url: z.string().url({ message: 'Must be a valid URL.' }).optional().or(z.literal('')),
+  role: z.enum(['admin', 'manager', 'editor', 'client'], { message: 'Please select a valid role.' }),
 });
 
 type EditUserFormValues = z.infer<typeof editUserFormSchema>;
@@ -34,8 +43,11 @@ interface EditUserFormProps {
   onClose: () => void;
 }
 
+const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
+
 const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { profile: currentUserProfile } = useSession(); // Get current user's profile
 
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserFormSchema),
@@ -43,6 +55,7 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
       first_name: initialData.first_name || '',
       last_name: initialData.last_name || '',
       avatar_url: initialData.avatar_url || '',
+      role: initialData.role,
     },
   });
 
@@ -51,6 +64,7 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
       first_name: initialData.first_name || '',
       last_name: initialData.last_name || '',
       avatar_url: initialData.avatar_url || '',
+      role: initialData.role,
     });
   }, [initialData, form]);
 
@@ -62,6 +76,7 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
         first_name: values.first_name || null,
         last_name: values.last_name || null,
         avatar_url: values.avatar_url || null,
+        role: values.role, // Update the role
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
@@ -76,6 +91,9 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
     }
     setIsSubmitting(false);
   };
+
+  // Disable role change if editing own account
+  const isEditingOwnRole = userId === currentUserProfile?.id;
 
   return (
     <Form {...form}>
@@ -126,6 +144,30 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
               <FormControl>
                 <Input placeholder="URL to user's avatar image" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Role</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value} disabled={isEditingOwnRole}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {USER_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
