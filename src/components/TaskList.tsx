@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button'; // Import Button
-import { Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { Trash2, Edit } from 'lucide-react'; // Import Trash2 and Edit icons
 import { // Import AlertDialog components
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,15 @@ import { // Import AlertDialog components
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog, // Import Dialog components
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import EditTaskForm from './EditTaskForm'; // Import the EditTaskForm
 
 interface Task {
   id: string;
@@ -66,6 +75,8 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
+  const [currentTaskToEdit, setCurrentTaskToEdit] = useState<Task | null>(null); // State to hold task being edited
   const { user, profile, isLoading: isSessionLoading } = useSession();
 
   const canEditTask = (task: Task) => {
@@ -77,6 +88,11 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
       return true;
     }
     return false;
+  };
+
+  const canEditTaskDetails = () => { // New function to check if user can edit task details (title, project, assignment)
+    if (isSessionLoading || !profile) return false;
+    return profile.role === 'admin' || profile.role === 'manager';
   };
 
   const canReassignTask = () => {
@@ -141,7 +157,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     };
 
     fetchTasksAndEditors();
-  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading]);
+  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading, isEditDialogOpen]); // Re-fetch when dialog closes
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const { error } = await supabase
@@ -191,6 +207,16 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     }
   };
 
+  const handleEditClick = (task: Task) => {
+    setCurrentTaskToEdit(task);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleTaskDetailsUpdated = () => {
+    onTaskUpdated?.(); // Trigger a refresh of the task list
+    setIsEditDialogOpen(false); // Close the dialog
+  };
+
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
@@ -217,31 +243,39 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
                 {task.title}
               </Link>
             </CardTitle>
-            {canDeleteTask() && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon" className="h-8 w-8">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete Task</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the task
-                      "{task.title}".
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <div className="flex items-center gap-2">
+              {canEditTaskDetails() && (
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(task)}>
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit Task</span>
+                </Button>
+              )}
+              {canDeleteTask() && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon" className="h-8 w-8">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete Task</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the task
+                        "{task.title}".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -296,6 +330,29 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
           </CardContent>
         </Card>
       ))}
+
+      {currentTaskToEdit && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Task</DialogTitle>
+              <DialogDescription>
+                Make changes to the task details here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <EditTaskForm
+              taskId={currentTaskToEdit.id}
+              initialData={{
+                title: currentTaskToEdit.title,
+                project_id: currentTaskToEdit.project_id || '',
+                assigned_to: currentTaskToEdit.assigned_to || '',
+              }}
+              onTaskUpdated={handleTaskDetailsUpdated}
+              onClose={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
