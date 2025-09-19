@@ -8,11 +8,11 @@ import TaskList from '@/components/TaskList'; // Import the new component
 
 const EditorDashboard = () => {
   const { profile, isLoading, user } = useSession();
-  const [taskUpdated, setTaskUpdated] = useState(false); // State to trigger task list refresh
+  const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false); // State to trigger task list refresh
 
   // This function would be called if an editor updates a task, e.g., changes status
-  const handleTaskUpdated = () => {
-    setTaskUpdated(!taskUpdated); // Toggle to trigger a re-fetch or re-render of task list
+  const handleTaskChange = () => {
+    setTaskRefreshTrigger(!taskRefreshTrigger); // Toggle to trigger a re-fetch or re-render of task list
   };
 
   if (isLoading) {
@@ -60,7 +60,7 @@ const EditorDashboard = () => {
           </p>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">My Assigned Tasks</h3>
-            {user && <TaskList refreshTrigger={taskUpdated} filterByAssignedTo={user.id} />}
+            {user && <TaskList refreshTrigger={taskRefreshTrigger} filterByAssignedTo={user.id} onTaskUpdated={handleTaskChange} />}
             {!user && <p className="text-center text-gray-500 dark:text-gray-400">Please log in to view your tasks.</p>}
           </div>
         </CardContent>

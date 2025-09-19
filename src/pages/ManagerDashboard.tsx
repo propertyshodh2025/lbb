@@ -9,10 +9,10 @@ import TaskList from '@/components/TaskList'; // Import the new component
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
-  const [taskAdded, setTaskAdded] = useState(false); // State to trigger task list refresh
+  const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false); // State to trigger task list re-fetch
 
-  const handleTaskAdded = () => {
-    setTaskAdded(!taskAdded); // Toggle to trigger a re-fetch or re-render of task list
+  const handleTaskChange = () => {
+    setTaskRefreshTrigger(!taskRefreshTrigger); // Toggle to trigger a re-fetch or re-render of task list
   };
 
   if (isLoading) {
@@ -60,11 +60,11 @@ const ManagerDashboard = () => {
           </p>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Task</h3>
-            <AddTaskForm onTaskAdded={handleTaskAdded} />
+            <AddTaskForm onTaskAdded={handleTaskChange} />
           </div>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Tasks</h3>
-            <TaskList refreshTrigger={taskAdded} />
+            <TaskList refreshTrigger={taskRefreshTrigger} onTaskUpdated={handleTaskChange} />
           </div>
         </CardContent>
       </Card>
