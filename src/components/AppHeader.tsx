@@ -5,9 +5,10 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase } from 'lucide-react'; // Import Briefcase icon for Projects
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon } from 'lucide-react'; // Import Sun and Moon icons
 import { cn } from '@/lib/utils';
 import UserNav from './UserNav';
+import { useTheme } from '@/contexts/ThemeContext'; // Import useTheme
 
 interface NavItem {
   to: string;
@@ -36,6 +37,7 @@ const NavLink = ({ to, children, className, onClick }: { to: string; children: R
 
 const AppHeader = () => {
   const { profile, isLoading, session } = useSession();
+  const { theme, toggleTheme } = useTheme(); // Use theme context
 
   if (isLoading || !session) {
     return null;
@@ -52,6 +54,10 @@ const AppHeader = () => {
           ProjectFlow
         </Link>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <span className="sr-only">Toggle theme</span>
+          </Button>
           {session && <UserNav />}
           <Sheet>
             <SheetTrigger asChild>

@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
-import TimelineTracker from '@/components/TimelineTracker'; // Import the new component
-import { Package, Clock, CheckCircle } from 'lucide-react';
+import TimelineTracker from '@/components/TimelineTracker';
+import { Package, Clock, CheckCircle, Download } from 'lucide-react'; // Import Download icon
 
 interface TaskWithHistory {
   id: string;
@@ -23,6 +23,7 @@ interface TaskWithHistory {
     timestamp: string;
   }[];
   projects: { title: string } | null;
+  attachments: string[]; // New attachments field
 }
 
 const ClientDashboard = () => {
@@ -43,6 +44,7 @@ const ClientDashboard = () => {
             status,
             created_at,
             due_date,
+            attachments,
             projects (title),
             task_status_history (id, status, notes, timestamp)
           `)
@@ -54,7 +56,6 @@ const ClientDashboard = () => {
           showError('Failed to load your tasks.');
           setClientTasks([]);
         } else {
-          // Sort history entries by timestamp for correct timeline display
           const sortedTasks = data?.map(task => ({
             ...task,
             task_status_history: task.task_status_history.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
@@ -117,7 +118,6 @@ const ClientDashboard = () => {
             Welcome, {profile?.first_name || 'Client'}! Here are your tasks:
           </p>
 
-          {/* Stats Overview */}
           <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="dark:bg-gray-900">
               <CardContent className="p-6 flex items-center">
@@ -156,7 +156,6 @@ const ClientDashboard = () => {
             </Card>
           </div>
 
-          {/* Active Tasks Section */}
           {activeTasks.length > 0 && (
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
@@ -169,7 +168,6 @@ const ClientDashboard = () => {
             </div>
           )}
 
-          {/* Completed Tasks Section */}
           {completedTasks.length > 0 && (
             <div className="mb-10">
               <div className="flex items-center justify-between mb-6">
@@ -178,7 +176,38 @@ const ClientDashboard = () => {
                   {completedTasks.length} task{completedTasks.length !== 1 ? 's' : ''} completed
                 </div>
               </div>
-              <TimelineTracker tasks={completedTasks} />
+              <div className="space-y-4">
+                {completedTasks.map((task) => (
+                  <Card key={task.id} className="dark:bg-gray-900">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900 dark:text-white">{task.title}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{task.projects?.title}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completed
+                          </div>
+                          {task.attachments && task.attachments.length > 0 && (
+                            <div className="flex justify-end mt-1">
+                              {task.attachments.map((url, index) => (
+                                <Button key={index} variant="ghost" size="icon" asChild className="h-6 w-6">
+                                  <a href={url} target="_blank" rel="noopener noreferrer" download>
+                                    <Download className="h-3 w-3" />
+                                    <span className="sr-only">Download file</span>
+                                  </a>
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           )}
 

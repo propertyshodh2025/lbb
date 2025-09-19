@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { ArrowLeft, Edit, Trash2, Paperclip, UploadCloud, Loader2, Download } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { // Import AlertDialog components
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -55,6 +55,7 @@ interface Task {
     last_name: string;
     role: string;
   } | null;
+  attachments: string[]; // New attachments field
 }
 
 interface Editor {
@@ -67,17 +68,18 @@ const TASK_STATUSES = ['Raw files received', 'Unassigned', 'Assigned', 'In Progr
 
 const TaskDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [task, setTask] = useState<Task | null>(null);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, profile, isLoading: isSessionLoading } = useSession();
 
   const canEditTaskDetails = (currentTask: Task | null) => {
     if (isSessionLoading || !profile || !currentTask) return false;
-    // Admins and Managers can edit any task details
     if (profile.role === 'admin' || profile.role === 'manager') {
       return true;
     }
@@ -86,11 +88,9 @@ const TaskDetailsPage = () => {
 
   const canEditTaskStatus = (currentTask: Task | null) => {
     if (isSessionLoading || !profile || !currentTask) return false;
-    // Admins and Managers can edit any task status
     if (profile.role === 'admin' || profile.role === 'manager') {
       return true;
     }
-    // Editors can edit tasks assigned to them
     if (profile.role === 'editor' && user?.id === currentTask.assigned_to) {
       return true;
     }
@@ -99,20 +99,23 @@ const TaskDetailsPage = () => {
 
   const canReassignTask = () => {
     if (isSessionLoading || !profile) return false;
-    // Admins and Managers can reassign tasks
     return profile.role === 'admin' || profile.role === 'manager';
   };
 
-  const canDeleteTask = () => { // New function to check delete permission
+  const canDeleteTask = () => {
     if (isSessionLoading || !profile) return false;
     return profile.role === 'admin' || profile.role === 'manager';
+  };
+
+  const canAddAttachments = (currentTask: Task | null) => {
+    if (isSessionLoading || !profile || !currentTask) return false;
+    return profile.role === 'admin' || profile.role === 'manager' || (profile.role === 'editor' && user?.id === currentTask.assigned_to);
   };
 
   const fetchTaskDetailsAndEditors = async () => {
     if (!id) return;
 
     setIsLoading(true);
-    // Fetch task details
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
       .select(`
@@ -123,6 +126,7 @@ const TaskDetailsPage = () => {
         updated_at,
         project_id,
         assigned_to,
+        attachments,
         projects (title),
         profiles (id, first_name, last_name, role)
       `)
@@ -137,7 +141,6 @@ const TaskDetailsPage = () => {
       setTask(taskData);
     }
 
-    // Fetch editors for assignment dropdown
     const { data: editorsData, error: editorsError } = await supabase
       .from('profiles')
       .select('id, first_name, last_name')
@@ -174,7 +177,6 @@ const TaskDetailsPage = () => {
       console.error('Error updating task status:', error);
       showError('Failed to update task status.');
     } else {
-      // Insert into task_status_history
       const { error: historyError } = await supabase.from('task_status_history').insert({
         task_id: task.id,
         status: newStatus,
@@ -214,7 +216,6 @@ const TaskDetailsPage = () => {
       console.error('Error updating task assignment:', error);
       showError('Failed to update task assignment.');
     } else {
-      // Insert into task_status_history
       const { error: historyError } = await supabase.from('task_status_history').insert({
         task_id: task.id,
         status: newStatus,
@@ -253,7 +254,6 @@ const TaskDetailsPage = () => {
       console.error('Error deleting task:', error);
       showError('Failed to delete task.');
     } else {
-      // Delete associated history entries
       const { error: historyDeleteError } = await supabase
         .from('task_status_history')
         .delete()
@@ -264,7 +264,63 @@ const TaskDetailsPage = () => {
       }
 
       showSuccess('Task deleted successfully!');
-      navigate(profile?.role === 'editor' ? '/editor' : '/manager'); // Redirect after deletion
+      navigate(profile?.role === 'editor' ? '/editor' : '/manager');
+    }
+  };
+
+  const handleAttachmentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !task) {
+      showError('You must be logged in to upload attachments.');
+      return;
+    }
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingAttachment(true);
+    let newAttachmentUrls: string[] = [...(task.attachments || [])];
+
+    try {
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${task.id}/${fileName}`; // Store attachments under task ID
+
+        const { error: uploadError } = await supabase.storage
+          .from('task_attachments')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('task_attachments')
+          .getPublicUrl(filePath);
+
+        if (publicUrlData?.publicUrl) {
+          newAttachmentUrls.push(publicUrlData.publicUrl);
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ attachments: newAttachmentUrls, updated_at: new Date().toISOString() })
+        .eq('id', task.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      showSuccess('Attachments uploaded successfully!');
+      fetchTaskDetailsAndEditors(); // Re-fetch to update UI
+    } catch (error: any) {
+      console.error('Error uploading attachments:', error.message);
+      showError(`Failed to upload attachments: ${error.message}`);
+    } finally {
+      setIsUploadingAttachment(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -308,7 +364,7 @@ const TaskDetailsPage = () => {
     title: task.title,
     project_id: task.project_id || '',
     assigned_to: task.assigned_to || '',
-    currentStatus: task.status, // Pass current status
+    currentStatus: task.status,
   };
 
   return (
@@ -434,6 +490,57 @@ const TaskDetailsPage = () => {
             <p className="text-gray-700 dark:text-gray-300">
               Last Updated: {format(new Date(task.updated_at), 'PPP HH:mm')}
             </p>
+          </div>
+
+          <div className="border-t pt-6 mt-6 dark:border-gray-700">
+            <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200 mb-3">Attachments:</h4>
+            {task.attachments && task.attachments.length > 0 ? (
+              <div className="space-y-2">
+                {task.attachments.map((url, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-gray-50 dark:bg-gray-700">
+                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
+                      {url.substring(url.lastIndexOf('/') + 1)}
+                    </span>
+                    <Button variant="ghost" size="icon" asChild>
+                      <a href={url} target="_blank" rel="noopener noreferrer" download>
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">Download attachment</span>
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No attachments.</p>
+            )}
+            {canAddAttachments(task) && (
+              <div className="mt-4">
+                <Input
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentUpload}
+                  disabled={isUploadingAttachment}
+                  ref={fileInputRef}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAttachment}
+                  className="mt-2 w-full"
+                >
+                  {isUploadingAttachment ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="mr-2 h-4 w-4" /> Add More Attachments
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

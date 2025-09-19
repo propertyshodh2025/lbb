@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTaskForm from '@/components/AddTaskForm';
-import KanbanBoard from '@/components/KanbanBoard'; // Import KanbanBoard
+import KanbanBoard from '@/components/KanbanBoard';
+import TaskList from '@/components/TaskList'; // Re-import TaskList for the list view
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react';
+import { PlusCircle, ArrowUpNarrowWide, ArrowDownNarrowWide, Search, CalendarIcon, LayoutGrid, List } from 'lucide-react'; // Import new icons
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import {
@@ -25,6 +26,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Project {
   id: string;
@@ -56,6 +62,7 @@ const SORT_OPTIONS = [
   { value: 'updated_at', label: 'Last Updated' },
   { value: 'title', label: 'Title' },
   { value: 'status', label: 'Status' },
+  { value: 'due_date', label: 'Due Date' },
 ];
 
 const TasksPage = () => {
@@ -69,8 +76,11 @@ const TasksPage = () => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [selectedProjectFilter, setSelectedProjectFilter] = useState('all');
   const [selectedAssignedToFilter, setSelectedAssignedToFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDueDate, setSelectedDueDate] = useState<Date | undefined>(undefined);
   const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc'); // Default to descending for dates
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban'); // New state for view mode
 
   const canViewTasks = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'editor');
   const canAddTasks = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager');
@@ -80,7 +90,6 @@ const TasksPage = () => {
 
     setIsTasksLoading(true);
 
-    // Fetch projects
     const { data: projectsData, error: projectsError } = await supabase
       .from('projects')
       .select('id, title')
@@ -93,7 +102,6 @@ const TasksPage = () => {
       setProjects(projectsData || []);
     }
 
-    // Fetch editors
     const { data: editorsData, error: editorsError } = await supabase
       .from('profiles')
       .select('id, first_name, last_name')
@@ -106,7 +114,6 @@ const TasksPage = () => {
       setEditors(editorsData || []);
     }
 
-    // Fetch tasks
     let query = supabase
       .from('tasks')
       .select(`
@@ -135,6 +142,10 @@ const TasksPage = () => {
     if (selectedStatusFilter !== 'all') {
       query = query.eq('status', selectedStatusFilter);
     }
+    if (selectedDueDate) {
+      const formattedDate = format(selectedDueDate, 'yyyy-MM-dd');
+      query = query.eq('due_date', formattedDate); // Assuming due_date is stored as date or timestamp without time
+    }
 
     query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
@@ -145,7 +156,13 @@ const TasksPage = () => {
       showError('Failed to load tasks.');
       setTasks([]);
     } else {
-      setTasks(tasksData || []);
+      const filteredBySearch = tasksData?.filter(task =>
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        task.projects?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (task.profiles?.first_name && task.profiles.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (task.profiles?.last_name && task.profiles.last_name.toLowerCase().includes(searchTerm.toLowerCase()))
+      ) || [];
+      setTasks(filteredBySearch);
     }
     setIsTasksLoading(false);
   };
@@ -158,18 +175,20 @@ const TasksPage = () => {
     selectedStatusFilter,
     selectedProjectFilter,
     selectedAssignedToFilter,
+    searchTerm,
+    selectedDueDate,
     sortBy,
     sortOrder,
-    isAddTaskDialogOpen // Re-fetch when add task dialog closes
+    isAddTaskDialogOpen
   ]);
 
   const handleTaskAdded = () => {
-    fetchTasksAndFilters(); // Re-fetch tasks after a new task is added
-    setIsAddTaskDialogOpen(false); // Close the dialog
+    fetchTasksAndFilters();
+    setIsAddTaskDialogOpen(false);
   };
 
   const handleTaskUpdated = () => {
-    fetchTasksAndFilters(); // Re-fetch tasks after a task is updated (e.g., via Kanban)
+    fetchTasksAndFilters();
   };
 
   const toggleSortOrder = () => {
@@ -244,8 +263,8 @@ const TasksPage = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">View, filter, and manage all tasks.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {canAddTasks && (
-            <div className="flex justify-end mb-4">
+          <div className="flex justify-between items-center mb-4">
+            {canAddTasks && (
               <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -262,10 +281,38 @@ const TasksPage = () => {
                   <AddTaskForm onTaskAdded={handleTaskAdded} />
                 </DialogContent>
               </Dialog>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'kanban' ? 'secondary' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('kanban')}
+                title="Kanban View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'outline'}
+                size="icon"
+                onClick={() => setViewMode('list')}
+                title="List View"
+              >
+                <List className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
             <Select value={selectedStatusFilter} onValueChange={setSelectedStatusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by Status" />
@@ -327,11 +374,54 @@ const TasksPage = () => {
               {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
               <span className="sr-only">Toggle sort order</span>
             </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={'outline'}
+                  className={cn(
+                    'w-[200px] justify-start text-left font-normal',
+                    !selectedDueDate && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDueDate ? format(selectedDueDate, 'PPP') : <span>Filter by Due Date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDueDate}
+                  onSelect={setSelectedDueDate}
+                  initialFocus
+                />
+                {selectedDueDate && (
+                  <div className="p-2">
+                    <Button variant="ghost" onClick={() => setSelectedDueDate(undefined)} className="w-full">
+                      Clear Date
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Task Kanban Board</h3>
-            <KanbanBoard initialTasks={tasks} columns={kanbanColumns} onTaskMove={handleTaskUpdated} />
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+              {viewMode === 'kanban' ? 'Task Kanban Board' : 'All Tasks List'}
+            </h3>
+            {viewMode === 'kanban' ? (
+              <KanbanBoard initialTasks={tasks} columns={kanbanColumns} onTaskMove={handleTaskUpdated} />
+            ) : (
+              <TaskList
+                refreshTrigger={false} // Handled by parent's useEffect
+                filterByAssignedTo={selectedAssignedToFilter === 'all' ? null : selectedAssignedToFilter}
+                filterByProjectId={selectedProjectFilter === 'all' ? null : selectedProjectFilter}
+                filterByStatus={selectedStatusFilter === 'all' ? null : selectedStatusFilter}
+                sortBy={sortBy}
+                sortOrder={sortOrder as 'asc' | 'desc'}
+                onTaskUpdated={handleTaskUpdated}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

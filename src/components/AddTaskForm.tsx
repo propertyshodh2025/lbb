@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,12 +23,14 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
-import { useSession } from './SessionContextProvider'; // Import useSession
+import { useSession } from './SessionContextProvider';
+import { UploadCloud, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   project_id: z.string().uuid({ message: 'Please select a project.' }),
   title: z.string().min(1, { message: 'Task title is required.' }),
   assigned_to: z.string().uuid({ message: 'Please select an editor.' }).optional().or(z.literal('')),
+  attachments: z.any().optional(), // For file input
 });
 
 type TaskFormValues = z.infer<typeof formSchema>;
@@ -46,35 +48,36 @@ interface Editor {
 
 interface AddTaskFormProps {
   onTaskAdded: () => void;
-  defaultProjectId?: string; // New optional prop
+  defaultProjectId?: string;
 }
 
 const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
-  const { user, isLoading: isSessionLoading } = useSession(); // Get current user
+  const { user, isLoading: isSessionLoading } = useSession();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      project_id: defaultProjectId || '', // Use defaultProjectId if provided
+      project_id: defaultProjectId || '',
       title: '',
       assigned_to: '',
     },
   });
 
-  // Reset form with defaultProjectId if it changes
   useEffect(() => {
     form.reset({
       project_id: defaultProjectId || '',
       title: '',
       assigned_to: '',
+      attachments: undefined,
     });
   }, [defaultProjectId, form]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch projects
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('id, title')
@@ -87,7 +90,6 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
         setProjects(projectsData || []);
       }
 
-      // Fetch editors
       const { data: editorsData, error: editorsError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
@@ -109,7 +111,39 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
       return;
     }
 
-    const initialStatus = values.assigned_to ? 'Assigned' : 'Raw files received'; // Initial status based on assignment
+    setIsUploading(true); // Start loading for form submission and upload
+
+    let attachmentUrls: string[] = [];
+    const files = values.attachments instanceof FileList ? Array.from(values.attachments) : [];
+
+    if (files.length > 0) {
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('task_attachments')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError);
+          showError(`Failed to upload file: ${file.name}`);
+          setIsUploading(false);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('task_attachments')
+          .getPublicUrl(filePath);
+
+        if (publicUrlData?.publicUrl) {
+          attachmentUrls.push(publicUrlData.publicUrl);
+        }
+      }
+    }
+
+    const initialStatus = values.assigned_to ? 'Assigned' : 'Raw files received';
     const assignedToUuid = values.assigned_to === '' ? null : values.assigned_to;
 
     const { data: newTaskData, error: taskError } = await supabase.from('tasks').insert({
@@ -117,14 +151,14 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
       title: values.title,
       assigned_to: assignedToUuid,
       status: initialStatus,
-      created_by: user.id, // Set created_by to the current user's ID
+      created_by: user.id,
+      attachments: attachmentUrls, // Save attachment URLs
     }).select().single();
 
     if (taskError) {
       console.error('Error adding task:', taskError);
       showError('Failed to add task.');
     } else {
-      // Insert initial status into task_status_history
       const { error: historyError } = await supabase.from('task_status_history').insert({
         task_id: newTaskData.id,
         status: initialStatus,
@@ -134,17 +168,21 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
 
       if (historyError) {
         console.error('Error adding task history:', historyError);
-        // Don't block, but log the error
       }
 
       showSuccess('Task added successfully!');
       form.reset({
-        project_id: defaultProjectId || '', // Reset to defaultProjectId or empty
+        project_id: defaultProjectId || '',
         title: '',
         assigned_to: '',
+        attachments: undefined,
       });
-      onTaskAdded(); // Notify parent component
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Clear the file input
+      }
+      onTaskAdded();
     }
+    setIsUploading(false);
   };
 
   return (
@@ -156,7 +194,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Project</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value} disabled={!!defaultProjectId}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={!!defaultProjectId || isUploading}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a project" />
@@ -181,7 +219,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
             <FormItem>
               <FormLabel>Task Title</FormLabel>
               <FormControl>
-                <Input placeholder="Enter task title" {...field} />
+                <Input placeholder="Enter task title" {...field} disabled={isUploading} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -193,7 +231,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign To (Editor)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isUploading}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an editor (optional)" />
@@ -212,8 +250,36 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSessionLoading}>
-          Add Task
+        <FormField
+          control={form.control}
+          name="attachments"
+          render={({ field: { value, onChange, ...fieldProps } }) => (
+            <FormItem>
+              <FormLabel>Raw Files (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...fieldProps}
+                  type="file"
+                  multiple
+                  onChange={(event) => {
+                    onChange(event.target.files && event.target.files.length > 0 ? event.target.files : undefined);
+                  }}
+                  disabled={isUploading}
+                  ref={fileInputRef}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={isSessionLoading || isUploading}>
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding Task...
+            </>
+          ) : (
+            'Add Task'
+          )}
         </Button>
       </form>
     </Form>
