@@ -23,12 +23,12 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+    const handleAuthStateChange = async (event: string, currentSession: Session | null) => {
+      console.log("Auth state changed:", event, currentSession ? "Session exists" : "No session");
       if (currentSession) {
         setSession(currentSession);
         setUser(currentSession.user);
 
-        // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, role, first_name, last_name, avatar_url')
@@ -36,7 +36,7 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           .single();
 
         if (profileError) {
-          console.error("Error fetching profile:", profileError);
+          console.error("Error fetching profile on auth state change:", profileError);
           showError("Failed to load user profile.");
           setProfile(null);
         } else {
@@ -44,7 +44,6 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
         }
 
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          // Redirect authenticated users from login page
           if (window.location.pathname === '/login') {
             navigate('/');
           }
@@ -53,36 +52,68 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
         setSession(null);
         setUser(null);
         setProfile(null);
-        // Redirect unauthenticated users to login page
         if (window.location.pathname !== '/login') {
           navigate('/login');
         }
       }
-      setIsLoading(false);
-    });
+      setIsLoading(false); // Ensure loading is false after any auth state change
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      if (initialSession) {
-        setSession(initialSession);
-        setUser(initialSession.user);
-        supabase
-          .from('profiles')
-          .select('id, role, first_name, last_name, avatar_url')
-          .eq('id', initialSession.user.id)
-          .single()
-          .then(({ data: profileData, error: profileError }) => {
-            if (profileError) {
-              console.error("Error fetching initial profile:", profileError);
-              showError("Failed to load user profile.");
-              setProfile(null);
-            } else {
-              setProfile(profileData);
-            }
-          });
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          console.error("Error getting initial session:", sessionError);
+          showError("Failed to retrieve initial session.");
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          if (window.location.pathname !== '/login') {
+            navigate('/login');
+          }
+        } else if (initialSession) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, role, first_name, last_name, avatar_url')
+            .eq('id', initialSession.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching initial profile:", profileError);
+            showError("Failed to load user profile.");
+            setProfile(null);
+          } else {
+            setProfile(profileData);
+          }
+          if (window.location.pathname === '/login') {
+            navigate('/');
+          }
+        } else {
+          // No initial session, redirect to login if not already there
+          if (window.location.pathname !== '/login') {
+            navigate('/login');
+          }
+        }
+      } catch (error) {
+        console.error("Unexpected error during initial session check:", error);
+        showError("An unexpected error occurred during authentication.");
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        if (window.location.pathname !== '/login') {
+          navigate('/login');
+        }
+      } finally {
+        setIsLoading(false); // ALWAYS set loading to false after initial check
       }
-      setIsLoading(false);
-    });
+    };
+
+    checkInitialSession();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
