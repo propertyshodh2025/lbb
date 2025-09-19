@@ -1,12 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import AddProjectForm from '@/components/AddProjectForm';
 
 const AdminDashboard = () => {
   const { profile, isLoading } = useSession();
+  const [projectAdded, setProjectAdded] = useState(false); // State to trigger project list refresh
+
+  const handleProjectAdded = () => {
+    setProjectAdded(!projectAdded); // Toggle to trigger a re-fetch or re-render of project list
+  };
 
   if (isLoading) {
     return (
@@ -48,10 +54,14 @@ const AdminDashboard = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">Manage all projects, tasks, and users.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-gray-700 dark:text-gray-300">
-            Welcome, Admin! This is where you'll find tools to add new projects, assign due dates, and oversee the entire workflow.
+          <p className="text-gray-700 dark:text-gray-300 mb-6">
+            Welcome, Admin! Use the form below to add new projects.
           </p>
-          {/* Admin specific content will go here */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Project</h3>
+            <AddProjectForm onProjectAdded={handleProjectAdded} />
+          </div>
+          {/* Project list will go here, potentially re-fetching based on projectAdded state */}
         </CardContent>
       </Card>
     </div>
