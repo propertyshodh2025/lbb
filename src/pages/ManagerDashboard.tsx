@@ -5,14 +5,20 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTaskForm from '@/components/AddTaskForm';
-import TaskList from '@/components/TaskList'; // Import the new component
+import TaskList from '@/components/TaskList';
+import ProjectList from '@/components/ProjectList'; // Import ProjectList
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
   const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false); // State to trigger task list re-fetch
+  const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(false); // State to trigger project list re-fetch
 
   const handleTaskChange = () => {
     setTaskRefreshTrigger(!taskRefreshTrigger); // Toggle to trigger a re-fetch or re-render of task list
+  };
+
+  const handleProjectChange = () => {
+    setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to trigger a re-fetch or re-render of project list
   };
 
   if (isLoading) {
@@ -52,12 +58,18 @@ const ManagerDashboard = () => {
       <Card className="w-full max-w-6xl shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Manager Dashboard</CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Oversee tasks and assign work to editors.</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Oversee projects and tasks, and assign work to editors.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Welcome, Manager! Use the form below to add new tasks.
+            Welcome, Manager! Here you can manage projects and tasks.
           </p>
+          
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
+            <ProjectList refreshTrigger={projectRefreshTrigger} onProjectUpdated={handleProjectChange} />
+          </div>
+
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Task</h3>
             <AddTaskForm onTaskAdded={handleTaskChange} />
