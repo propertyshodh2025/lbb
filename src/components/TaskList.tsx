@@ -13,7 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Link } from 'react-router-dom'; // Import Link
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button'; // Import Button
+import { Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { // Import AlertDialog components
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Task {
   id: string;
@@ -41,10 +54,10 @@ interface Editor {
 }
 
 interface TaskListProps {
-  refreshTrigger?: boolean; // Prop to trigger re-fetch
-  filterByAssignedTo?: string | null; // Optional: filter tasks by assigned editor ID
-  filterByProjectId?: string | null; // New: Optional filter tasks by project ID
-  onTaskUpdated?: () => void; // Callback for when a task is updated
+  refreshTrigger?: boolean;
+  filterByAssignedTo?: string | null;
+  filterByProjectId?: string | null;
+  onTaskUpdated?: () => void;
 }
 
 const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
@@ -57,11 +70,9 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
 
   const canEditTask = (task: Task) => {
     if (isSessionLoading || !profile) return false;
-    // Admins and Managers can edit any task
     if (profile.role === 'admin' || profile.role === 'manager') {
       return true;
     }
-    // Editors can edit tasks assigned to them
     if (profile.role === 'editor' && user?.id === task.assigned_to) {
       return true;
     }
@@ -70,7 +81,11 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
 
   const canReassignTask = () => {
     if (isSessionLoading || !profile) return false;
-    // Admins and Managers can reassign tasks
+    return profile.role === 'admin' || profile.role === 'manager';
+  };
+
+  const canDeleteTask = () => {
+    if (isSessionLoading || !profile) return false;
     return profile.role === 'admin' || profile.role === 'manager';
   };
 
@@ -78,7 +93,6 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     const fetchTasksAndEditors = async () => {
       setIsLoading(true);
 
-      // Fetch tasks
       let query = supabase
         .from('tasks')
         .select(`
@@ -111,7 +125,6 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
         setTasks(tasksData || []);
       }
 
-      // Fetch editors for assignment dropdown
       const { data: editorsData, error: editorsError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
@@ -128,7 +141,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     };
 
     fetchTasksAndEditors();
-  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading]); // Re-fetch when refreshTrigger, filters, or session loading changes
+  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading]);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const { error } = await supabase
@@ -141,7 +154,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
       showError('Failed to update task status.');
     } else {
       showSuccess('Task status updated successfully!');
-      onTaskUpdated?.(); // Notify parent to refresh
+      onTaskUpdated?.();
     }
   };
 
@@ -159,7 +172,22 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
       showError('Failed to update task assignment.');
     } else {
       showSuccess('Task assignment updated successfully!');
-      onTaskUpdated?.(); // Notify parent to refresh
+      onTaskUpdated?.();
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string, taskTitle: string) => {
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId);
+
+    if (error) {
+      console.error('Error deleting task:', error);
+      showError(`Failed to delete task "${taskTitle}".`);
+    } else {
+      showSuccess(`Task "${taskTitle}" deleted successfully!`);
+      onTaskUpdated?.(); // Notify parent to refresh the list
     }
   };
 
@@ -183,17 +211,42 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     <div className="space-y-4">
       {tasks.map((task) => (
         <Card key={task.id} className="shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">
               <Link to={`/tasks/${task.id}`} className="hover:underline text-primary dark:text-primary-foreground">
                 {task.title}
               </Link>
             </CardTitle>
+            {canDeleteTask() && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon" className="h-8 w-8">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete Task</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the task
+                      "{task.title}".
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Project: {task.projects?.title || 'N/A'}
             </p>
-          </CardHeader>
-          <CardContent className="space-y-2">
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Status:</p>
               <Select
