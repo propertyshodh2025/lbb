@@ -6,11 +6,27 @@ import { useSession } from '@/components/SessionContextProvider';
 import LogoutButton from '@/components/LogoutButton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const NavLink = ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
-  <Link to={to} className={cn("text-sm font-medium transition-colors hover:text-primary", className)}>
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  roles: string[];
+}
+
+const navItems: NavItem[] = [
+  { to: '/', label: 'Dashboard', icon: Home, roles: ['admin', 'manager', 'editor', 'client'] },
+  { to: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
+  { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
+  { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
+  { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
+];
+
+const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: () => void }) => (
+  <Link to={to} className={cn("text-sm font-medium transition-colors hover:text-primary", className)} onClick={onClick}>
     {children}
   </Link>
 );
@@ -18,47 +34,20 @@ const NavLink = ({ to, children, className }: { to: string; children: React.Reac
 const AppHeader = () => {
   const { profile, isLoading, session } = useSession();
 
-  if (isLoading || !session) { // Only render header if session is loading or exists
-    return null; 
+  if (isLoading || !session) {
+    return null;
   }
 
-  const getNavLinks = () => {
-    const links = [];
-    if (profile) { // Only add role-specific links if profile is loaded
-      if (profile.role === 'admin') {
-        links.push({ to: '/admin', label: 'Admin Dashboard' });
-        links.push({ to: '/manager', label: 'Manager Dashboard' });
-        links.push({ to: '/editor', label: 'Editor Dashboard' });
-        links.push({ to: '/client', label: 'Client Dashboard' }); // Admin can view client dashboard
-      } else if (profile.role === 'manager') {
-        links.push({ to: '/manager', label: 'Manager Dashboard' });
-        links.push({ to: '/editor', label: 'Editor Dashboard' }); // Manager can view editor dashboard
-      } else if (profile.role === 'editor') {
-        links.push({ to: '/editor', label: 'Editor Dashboard' });
-      } else if (profile.role === 'client') {
-        links.push({ to: '/client', label: 'My Projects' });
-      }
-    }
-    return links;
-  };
-
-  const navLinks = getNavLinks();
+  const filteredNavItems = navItems.filter(item =>
+    profile && item.roles.includes(profile.role)
+  );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background">
+    <header className="sticky top-0 z-40 w-full border-b bg-background md:hidden"> {/* Only show header on mobile */}
       <div className="container flex h-16 items-center justify-between py-4">
         <Link to="/" className="text-lg font-bold text-primary">
           ProjectFlow
         </Link>
-        <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
-          {navLinks.map((link) => (
-            <NavLink key={link.to} to={link.to}>
-              {link.label}
-            </NavLink>
-          ))}
-          {session && <NavLink to="/profile">My Profile</NavLink>} {/* Always show My Profile if logged in */}
-          {session && <LogoutButton />}
-        </nav>
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -69,12 +58,12 @@ const AppHeader = () => {
             </SheetTrigger>
             <SheetContent side="right">
               <nav className="flex flex-col gap-4 pt-6">
-                {navLinks.map((link) => (
-                  <NavLink key={link.to} to={link.to} className="text-lg">
-                    {link.label}
+                {filteredNavItems.map((item) => (
+                  <NavLink key={item.to} to={item.to} className="text-lg">
+                    <item.icon className="mr-2 h-5 w-5 inline-block" />
+                    {item.label}
                   </NavLink>
                 ))}
-                {session && <NavLink to="/profile" className="text-lg">My Profile</NavLink>}
                 {session && <LogoutButton />}
               </nav>
             </SheetContent>
