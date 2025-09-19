@@ -13,6 +13,7 @@ import EditorDashboard from '@/pages/EditorDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage';
 import TaskDetailsPage from '@/pages/TaskDetailsPage';
+import UserManagementPage from '@/pages/UserManagementPage'; // Import the new page
 
 const AppRoutes = () => {
   return (
@@ -27,6 +28,7 @@ const AppRoutes = () => {
         <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
         <Route path="/editor" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><EditorDashboard /></ProtectedRoute>} />
         <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} /> {/* New route */}
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       </Route>
       <Route path="*" element={<NotFound />} />
