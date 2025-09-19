@@ -1,12 +1,18 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import AddTaskForm from '@/components/AddTaskForm'; // Import the new component
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
+  const [taskAdded, setTaskAdded] = useState(false); // State to trigger task list refresh
+
+  const handleTaskAdded = () => {
+    setTaskAdded(!taskAdded); // Toggle to trigger a re-fetch or re-render of task list
+  };
 
   if (isLoading) {
     return (
@@ -48,10 +54,14 @@ const ManagerDashboard = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">Oversee tasks and assign work to editors.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-gray-700 dark:text-gray-300">
-            Welcome, Manager! This will be your Kanban board for unassigned tasks and editor queues.
+          <p className="text-gray-700 dark:text-gray-300 mb-6">
+            Welcome, Manager! Use the form below to add new tasks.
           </p>
-          {/* Manager specific content (Kanban board) will go here */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Task</h3>
+            <AddTaskForm onTaskAdded={handleTaskAdded} />
+          </div>
+          {/* Task list will go here, potentially re-fetching based on taskAdded state */}
         </CardContent>
       </Card>
     </div>
