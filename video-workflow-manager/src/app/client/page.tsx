@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogOut, Package, Clock, CheckCircle } from 'lucide-react'
 import { Task, TaskStatus, TaskStatusHistory } from '@prisma/client'
+import { Notifications } from '@/components/Notifications' // Import Notifications
 
 interface TaskWithDetails extends Task {
   project: {
@@ -29,6 +30,17 @@ export default function ClientDashboard() {
       return
     }
     fetchTasks()
+
+    // Listen for real-time updates
+    window.addEventListener('taskStatusChanged', fetchTasks as EventListener)
+    window.addEventListener('taskAssigned', fetchTasks as EventListener)
+    window.addEventListener('projectUpdated', fetchTasks as EventListener)
+
+    return () => {
+      window.removeEventListener('taskStatusChanged', fetchTasks as EventListener)
+      window.removeEventListener('taskAssigned', fetchTasks as EventListener)
+      window.removeEventListener('projectUpdated', fetchTasks as EventListener)
+    }
   }, [user])
 
   const fetchTasks = async () => {
@@ -71,10 +83,13 @@ export default function ClientDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">My Projects</h1>
               <p className="text-gray-600">Track your video editing projects</p>
             </div>
-            <Button variant="outline" onClick={logout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex gap-4">
+              <Notifications /> {/* Add Notifications component */}
+              <Button variant="outline" onClick={logout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>

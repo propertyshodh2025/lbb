@@ -14,17 +14,20 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { KanbanColumn } from './KanbanColumn'
 import { TaskCard } from './TaskCard'
-import { Task, TaskStatus } from '@prisma/client'
+import { Task, TaskStatus, Project } from '@prisma/client'
+import { emitTaskUpdate } from '@/contexts/SocketContext' // Import emitTaskUpdate
+
+interface TaskWithProject extends Task {
+  project: Project & {
+    client: {
+      id: string // Ensure client ID is available
+      name: string
+    }
+  }
+}
 
 interface KanbanBoardProps {
-  tasks: (Task & {
-    project?: {
-      title: string
-      client?: {
-        name: string
-      }
-    }
-  })[]
+  tasks: TaskWithProject[]
   columns: {
     id: string
     title: string
@@ -80,6 +83,16 @@ export function KanbanBoard({
 
     try {
       await onTaskMove(taskId, newStatus)
+      
+      // Emit socket event after successful DB update
+      emitTaskUpdate({
+        taskId: task.id,
+        taskTitle: task.title,
+        status: newStatus,
+        assignedToId: task.assignedToId, // Keep current assignedToId for now, actual assignment logic is in manager dashboard
+        clientId: task.project.client.id,
+      })
+
     } catch (error) {
       console.error('Failed to move task:', error)
     }

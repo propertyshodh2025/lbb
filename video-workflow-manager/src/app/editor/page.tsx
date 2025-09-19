@@ -7,11 +7,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogOut, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import { Task, TaskStatus } from '@prisma/client'
+import { Notifications } from '@/components/Notifications' // Import Notifications
+import { emitTaskUpdate } from '@/contexts/SocketContext' // Import emitTaskUpdate
 
 interface TaskWithProject extends Task {
   project: {
     title: string
     client: {
+      id: string // Add client ID for socket emission
       name: string
     }
   }
@@ -49,6 +52,17 @@ export default function EditorDashboard() {
       return
     }
     fetchTasks()
+
+    // Listen for real-time updates
+    window.addEventListener('taskStatusChanged', fetchTasks as EventListener)
+    window.addEventListener('taskAssigned', fetchTasks as EventListener)
+    window.addEventListener('projectUpdated', fetchTasks as EventListener)
+
+    return () => {
+      window.removeEventListener('taskStatusChanged', fetchTasks as EventListener)
+      window.removeEventListener('taskAssigned', fetchTasks as EventListener)
+      window.removeEventListener('projectUpdated', fetchTasks as EventListener)
+    }
   }, [user])
 
   const fetchTasks = async () => {
@@ -84,6 +98,15 @@ export default function EditorDashboard() {
       })
 
       if (response.ok) {
+        const updatedTask = await response.json()
+        // Emit socket event after successful DB update
+        emitTaskUpdate({
+          taskId: updatedTask.task.id,
+          taskTitle: updatedTask.task.title,
+          status: updatedTask.task.status,
+          assignedToId: updatedTask.task.assignedToId,
+          clientId: updatedTask.task.project.client.id,
+        })
         await fetchTasks()
       }
     } catch (error) {
@@ -108,10 +131,13 @@ export default function EditorDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Editor Dashboard</h1>
               <p className="text-gray-600">Welcome back, {user?.name}</p>
             </div>
-            <Button variant="outline" onClick={logout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex gap-4">
+              <Notifications /> {/* Add Notifications component */}
+              <Button variant="outline" onClick={logout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -7,11 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LogOut, Users } from 'lucide-react'
 import { Task, TaskStatus, User } from '@prisma/client'
+import { Notifications } from '@/components/Notifications' // Import Notifications
+import { emitTaskUpdate } from '@/contexts/SocketContext' // Import emitTaskUpdate
 
 interface TaskWithProject extends Task {
   project: {
     title: string
     client: {
+      id: string // Add client ID for socket emission
       name: string
     }
   }
@@ -35,6 +38,17 @@ export default function ManagerDashboard() {
     }
     fetchTasks()
     fetchEditors()
+
+    // Listen for real-time updates
+    window.addEventListener('taskStatusChanged', fetchTasks as EventListener)
+    window.addEventListener('taskAssigned', fetchTasks as EventListener)
+    window.addEventListener('projectUpdated', fetchTasks as EventListener)
+
+    return () => {
+      window.removeEventListener('taskStatusChanged', fetchTasks as EventListener)
+      window.removeEventListener('taskAssigned', fetchTasks as EventListener)
+      window.removeEventListener('projectUpdated', fetchTasks as EventListener)
+    }
   }, [user])
 
   const columns = [
@@ -147,6 +161,15 @@ export default function ManagerDashboard() {
       })
 
       if (response.ok) {
+        const updatedTask = await response.json()
+        // Emit socket event after successful DB update
+        emitTaskUpdate({
+          taskId: updatedTask.task.id,
+          taskTitle: updatedTask.task.title,
+          status: updatedTask.task.status,
+          assignedToId: updatedTask.task.assignedToId,
+          clientId: updatedTask.task.project.client.id,
+        })
         await fetchTasks()
       }
     } catch (error) {
@@ -189,6 +212,7 @@ export default function ManagerDashboard() {
               <p className="text-gray-600">Assign tasks to editors and track progress</p>
             </div>
             <div className="flex gap-4 items-center">
+              <Notifications /> {/* Add Notifications component */}
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Users className="w-4 h-4" />
                 {editors.length} Editors Available

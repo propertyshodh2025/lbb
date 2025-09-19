@@ -8,11 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Plus, LogOut } from 'lucide-react'
 import { Task, TaskStatus, Project } from '@prisma/client'
+import { Notifications } from '@/components/Notifications' // Import Notifications
+import { emitTaskUpdate } from '@/contexts/SocketContext' // Import emitTaskUpdate
 
 interface TaskWithProject extends Task {
   project: {
     title: string
     client: {
+      id: string // Add client ID for socket emission
       name: string
     }
   }
@@ -79,6 +82,17 @@ export default function AdminDashboard() {
     }
     fetchTasks()
     fetchProjects()
+
+    // Listen for real-time updates
+    window.addEventListener('taskStatusChanged', fetchTasks as EventListener)
+    window.addEventListener('taskAssigned', fetchTasks as EventListener)
+    window.addEventListener('projectUpdated', fetchTasks as EventListener)
+
+    return () => {
+      window.removeEventListener('taskStatusChanged', fetchTasks as EventListener)
+      window.removeEventListener('taskAssigned', fetchTasks as EventListener)
+      window.removeEventListener('projectUpdated', fetchTasks as EventListener)
+    }
   }, [user])
 
   const fetchTasks = async () => {
@@ -132,6 +146,15 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
+        const updatedTask = await response.json()
+        // Emit socket event after successful DB update
+        emitTaskUpdate({
+          taskId: updatedTask.task.id,
+          taskTitle: updatedTask.task.title,
+          status: updatedTask.task.status,
+          assignedToId: updatedTask.task.assignedToId,
+          clientId: updatedTask.task.project.client.id,
+        })
         await fetchTasks() // Refresh tasks
       }
     } catch (error) {
@@ -153,6 +176,15 @@ export default function AdminDashboard() {
       })
 
       if (response.ok) {
+        const createdTask = await response.json()
+        // Emit socket event after successful DB update
+        emitTaskUpdate({
+          taskId: createdTask.task.id,
+          taskTitle: createdTask.task.title,
+          status: createdTask.task.status,
+          assignedToId: createdTask.task.assignedToId,
+          clientId: createdTask.task.project.client.id,
+        })
         setNewTask({
           title: '',
           description: '',
@@ -183,6 +215,7 @@ export default function AdminDashboard() {
               <p className="text-gray-600">Welcome back, {user?.name}</p>
             </div>
             <div className="flex gap-4">
+              <Notifications /> {/* Add Notifications component */}
               <Button onClick={() => setShowCreateForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Task
