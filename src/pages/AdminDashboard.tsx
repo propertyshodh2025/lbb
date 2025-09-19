@@ -5,15 +5,27 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddProjectForm from '@/components/AddProjectForm';
-import ProjectList from '@/components/ProjectList';
-import UserStatsCard from '@/components/UserStatsCard'; // Import the new component
+import UserStatsCard from '@/components/UserStatsCard';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { PlusCircle, Briefcase } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const AdminDashboard = () => {
   const { profile, isLoading } = useSession();
   const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(false); // State to trigger project list refresh
+  const [isAddProjectDialogOpen, setIsAddProjectDialogOpen] = useState(false);
 
-  const handleProjectChange = () => {
+  const handleProjectAdded = () => {
     setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to trigger a re-fetch or re-render of project list
+    setIsAddProjectDialogOpen(false); // Close the dialog
   };
 
   if (isLoading) {
@@ -65,13 +77,31 @@ const AdminDashboard = () => {
               <UserStatsCard />
             </div>
             <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Project</h3>
-              <AddProjectForm onProjectAdded={handleProjectChange} />
+              <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Actions</h3>
+              <div className="space-y-4">
+                <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="w-full">
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add New Project
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Project</DialogTitle>
+                      <DialogDescription>
+                        Fill in the details to create a new project.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <AddProjectForm onProjectAdded={handleProjectAdded} />
+                  </DialogContent>
+                </Dialog>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/projects">
+                    <Briefcase className="mr-2 h-4 w-4" /> View All Projects
+                  </Link>
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
-            <ProjectList refreshTrigger={projectRefreshTrigger} onProjectUpdated={handleProjectChange} />
           </div>
         </CardContent>
       </Card>

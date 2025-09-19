@@ -5,7 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks } from 'lucide-react'; // Import ListChecks icon
+import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks, Briefcase } from 'lucide-react'; // Import Briefcase icon for Projects
 import UserNav from './UserNav';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -22,7 +22,8 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
-  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] }, // New navigation item
+  { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] }, // New navigation item for ProjectsPage
+  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] },
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];

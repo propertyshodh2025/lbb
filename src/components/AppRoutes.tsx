@@ -14,7 +14,8 @@ import ClientDashboard from '@/pages/ClientDashboard';
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage';
 import TaskDetailsPage from '@/pages/TaskDetailsPage';
 import UserManagementPage from '@/pages/UserManagementPage';
-import TasksPage from '@/pages/TasksPage'; // Import the new TasksPage
+import TasksPage from '@/pages/TasksPage';
+import ProjectsPage from '@/pages/ProjectsPage'; // Import the new ProjectsPage
 
 const AppRoutes = () => {
   return (
@@ -30,7 +31,8 @@ const AppRoutes = () => {
         <Route path="/editor" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><EditorDashboard /></ProtectedRoute>} />
         <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
-        <Route path="/tasks" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><TasksPage /></ProtectedRoute>} /> {/* New route for TasksPage */}
+        <Route path="/tasks" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><TasksPage /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ProjectsPage /></ProtectedRoute>} /> {/* New route for ProjectsPage */}
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       </Route>
       <Route path="*" element={<NotFound />} />

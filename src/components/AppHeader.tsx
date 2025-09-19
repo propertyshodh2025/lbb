@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks } from 'lucide-react'; // Import ListChecks icon
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase } from 'lucide-react'; // Import Briefcase icon for Projects
 import { cn } from '@/lib/utils';
 import UserNav from './UserNav';
 
@@ -22,7 +22,8 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
-  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] }, // New navigation item
+  { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] }, // New navigation item for ProjectsPage
+  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] },
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];

@@ -6,19 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTaskForm from '@/components/AddTaskForm';
 import TaskList from '@/components/TaskList';
-import ProjectList from '@/components/ProjectList'; // Import ProjectList
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Briefcase } from 'lucide-react';
 
 const ManagerDashboard = () => {
   const { profile, isLoading } = useSession();
   const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false); // State to trigger task list re-fetch
-  const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(false); // State to trigger project list re-fetch
 
   const handleTaskChange = () => {
     setTaskRefreshTrigger(!taskRefreshTrigger); // Toggle to trigger a re-fetch or re-render of task list
-  };
-
-  const handleProjectChange = () => {
-    setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to trigger a re-fetch or re-render of project list
   };
 
   if (isLoading) {
@@ -66,8 +63,12 @@ const ManagerDashboard = () => {
           </p>
           
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
-            <ProjectList refreshTrigger={projectRefreshTrigger} onProjectUpdated={handleProjectChange} />
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Overview</h3>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/projects">
+                <Briefcase className="mr-2 h-4 w-4" /> View All Projects
+              </Link>
+            </Button>
           </div>
 
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
