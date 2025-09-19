@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2 } from 'lucide-react'; // Import Trash2 icon
 import {
   Select,
   SelectContent,
@@ -25,7 +25,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import EditTaskForm from '@/components/EditTaskForm'; // Import the new EditTaskForm
+import { // Import AlertDialog components
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import EditTaskForm from '@/components/EditTaskForm';
 
 interface Task {
   id: string;
@@ -56,11 +67,12 @@ const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Un
 
 const TaskDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [task, setTask] = useState<Task | null>(null);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { user, profile, isLoading: isSessionLoading } = useSession();
 
   const canEditTaskDetails = (currentTask: Task | null) => {
@@ -88,6 +100,11 @@ const TaskDetailsPage = () => {
   const canReassignTask = () => {
     if (isSessionLoading || !profile) return false;
     // Admins and Managers can reassign tasks
+    return profile.role === 'admin' || profile.role === 'manager';
+  };
+
+  const canDeleteTask = () => { // New function to check delete permission
+    if (isSessionLoading || !profile) return false;
     return profile.role === 'admin' || profile.role === 'manager';
   };
 
@@ -138,7 +155,7 @@ const TaskDetailsPage = () => {
 
   useEffect(() => {
     fetchTaskDetailsAndEditors();
-  }, [id, isEditDialogOpen]); // Re-fetch when ID changes or edit dialog closes
+  }, [id, isEditDialogOpen]);
 
   const handleStatusChange = async (newStatus: string) => {
     if (!task || newStatus === task.status) return;
@@ -154,7 +171,7 @@ const TaskDetailsPage = () => {
       showError('Failed to update task status.');
     } else {
       showSuccess('Task status updated successfully!');
-      setTask(prev => prev ? { ...prev, status: newStatus } : null); // Optimistic update
+      setTask(prev => prev ? { ...prev, status: newStatus } : null);
     }
     setIsUpdating(false);
   };
@@ -178,14 +195,31 @@ const TaskDetailsPage = () => {
       showError('Failed to update task assignment.');
     } else {
       showSuccess('Task assignment updated successfully!');
-      setTask(prev => prev ? { ...prev, assigned_to: assignedToUuid, status: newStatus } : null); // Optimistic update
+      setTask(prev => prev ? { ...prev, assigned_to: assignedToUuid, status: newStatus } : null);
     }
     setIsUpdating(false);
   };
 
   const handleTaskDetailsUpdated = () => {
-    fetchTaskDetailsAndEditors(); // Re-fetch task details after update
-    setIsEditDialogOpen(false); // Close the dialog
+    fetchTaskDetailsAndEditors();
+    setIsEditDialogOpen(false);
+  };
+
+  const handleDeleteTask = async () => {
+    if (!id || !task) return;
+
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting task:', error);
+      showError('Failed to delete task.');
+    } else {
+      showSuccess('Task deleted successfully!');
+      navigate(profile?.role === 'editor' ? '/editor' : '/manager'); // Redirect after deletion
+    }
   };
 
   if (isLoading || isSessionLoading) {
@@ -267,6 +301,31 @@ const TaskDetailsPage = () => {
                     />
                   </DialogContent>
                 </Dialog>
+              )}
+              {canDeleteTask() && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete Task</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the task
+                        "{task.title}".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteTask} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </div>
