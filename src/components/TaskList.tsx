@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Link } from 'react-router-dom'; // Import Link
 
 interface Task {
   id: string;
@@ -183,7 +184,11 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
       {tasks.map((task) => (
         <Card key={task.id} className="shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">{task.title}</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              <Link to={`/tasks/${task.id}`} className="hover:underline text-primary dark:text-primary-foreground">
+                {task.title}
+              </Link>
+            </CardTitle>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Project: {task.projects?.title || 'N/A'}
             </p>
