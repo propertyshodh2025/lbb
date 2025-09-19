@@ -16,30 +16,32 @@ const RoleBasedRedirect = () => {
         return;
       }
 
-      if (profile) {
-        switch (profile.role) {
-          case 'admin':
-            navigate('/admin');
-            break;
-          case 'manager':
-            navigate('/manager');
-            break;
-          case 'editor':
-            navigate('/editor');
-            break;
-          case 'client':
-            navigate('/client');
-            break;
-          default:
-            // Fallback for unknown roles or if profile is still loading
-            console.warn("Unknown role or profile not fully loaded:", profile?.role);
-            navigate('/login'); // Redirect to login if role is not recognized
-            break;
-        }
-      } else {
-        // If session exists but profile is null (e.g., profile not yet created or error fetching)
-        console.warn("Session exists but profile is null. Redirecting to login.");
-        navigate('/login');
+      if (!profile) {
+        // If session exists but profile is null, redirect to complete profile page
+        console.warn("Session exists but profile is null. Redirecting to complete profile.");
+        navigate('/complete-profile');
+        return;
+      }
+
+      // If profile exists, redirect based on role
+      switch (profile.role) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'manager':
+          navigate('/manager');
+          break;
+        case 'editor':
+          navigate('/editor');
+          break;
+        case 'client':
+          navigate('/client');
+          break;
+        default:
+          // Fallback for unknown roles or if profile is still loading
+          console.warn("Unknown role or profile not fully loaded:", profile?.role);
+          navigate('/complete-profile'); // Redirect to complete profile if role is not recognized
+          break;
       }
     }
   }, [isLoading, profile, session, navigate]);

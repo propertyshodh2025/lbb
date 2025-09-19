@@ -19,12 +19,13 @@ import { showSuccess, showError } from '@/utils/toast';
 import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, UploadCloud, Loader2 } from 'lucide-react'; // Import Loader2 for loading state
-import { Separator } from '@/components/ui/separator'; // Import Separator
+import { User as UserIcon, UploadCloud, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const profileFormSchema = z.object({
-  first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
-  last_name: z.string().min(1, { message: 'Last name is required.' }).optional().or(z.literal('')),
+  first_name: z.string().min(1, { message: 'First name is required.' }),
+  last_name: z.string().min(1, { message: 'Last name is required.' }),
 });
 
 const passwordFormSchema = z.object({
@@ -38,8 +39,13 @@ const passwordFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
-const ProfileForm = () => {
+interface ProfileFormProps {
+  isInitialProfileSetup?: boolean; // New prop to indicate initial setup
+}
+
+const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
   const { user, profile, isLoading: isSessionLoading } = useSession();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -77,21 +83,43 @@ const ProfileForm = () => {
     }
 
     setIsProfileSubmitting(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        first_name: values.first_name || null,
-        last_name: values.last_name || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
 
-    if (error) {
-      console.error('Error updating profile:', error);
-      showError('Failed to update profile.');
+    if (isInitialProfileSetup) {
+      // If it's initial setup, insert a new profile
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          first_name: values.first_name,
+          last_name: values.last_name,
+          role: 'client', // Default role for new sign-ups
+        });
+
+      if (error) {
+        console.error('Error creating initial profile:', error);
+        showError('Failed to create profile.');
+      } else {
+        showSuccess('Profile created successfully!');
+        navigate('/'); // Redirect to dashboard after initial setup
+      }
     } else {
-      showSuccess('Profile updated successfully!');
-      // Optionally, trigger a session refresh or re-fetch profile in SessionContextProvider
+      // Otherwise, update the existing profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          first_name: values.first_name,
+          last_name: values.last_name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        showError('Failed to update profile.');
+      } else {
+        showSuccess('Profile updated successfully!');
+        // Optionally, trigger a session refresh or re-fetch profile in SessionContextProvider
+      }
     }
     setIsProfileSubmitting(false);
   };
@@ -189,7 +217,7 @@ const ProfileForm = () => {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return <p className="text-center text-gray-500 dark:text-gray-400">Please log in to manage your profile.</p>;
   }
 
@@ -197,45 +225,47 @@ const ProfileForm = () => {
     <div className="space-y-8">
       <Form {...profileForm}>
         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.avatar_url || undefined} alt={`${profile.first_name} ${profile.last_name}`} />
-              <AvatarFallback>
-                <UserIcon className="h-12 w-12 text-gray-400" />
-              </AvatarFallback>
-            </Avatar>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {user.email}
-            </p>
-            <div className="relative">
-              <Input
-                type="file"
-                id="avatar-upload"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-                disabled={isUploadingAvatar}
-                ref={fileInputRef}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploadingAvatar}
-                className="flex items-center gap-2"
-              >
-                {isUploadingAvatar ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="h-4 w-4" /> Upload Avatar
-                  </>
-                )}
-              </Button>
+          {!isInitialProfileSetup && (
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profile?.avatar_url || undefined} alt={`${profile?.first_name} ${profile?.last_name}`} />
+                <AvatarFallback>
+                  <UserIcon className="h-12 w-12 text-gray-400" />
+                </AvatarFallback>
+              </Avatar>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {user.email}
+              </p>
+              <div className="relative">
+                <Input
+                  type="file"
+                  id="avatar-upload"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                  disabled={isUploadingAvatar}
+                  ref={fileInputRef}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="flex items-center gap-2"
+                >
+                  {isUploadingAvatar ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="h-4 w-4" /> Upload Avatar
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
           <FormField
             control={profileForm.control}
             name="first_name"
@@ -263,47 +293,51 @@ const ProfileForm = () => {
             )}
           />
           <Button type="submit" className="w-full" disabled={isProfileSubmitting}>
-            {isProfileSubmitting ? 'Saving...' : 'Update Profile'}
+            {isProfileSubmitting ? 'Saving...' : (isInitialProfileSetup ? 'Complete Profile' : 'Update Profile')}
           </Button>
         </form>
       </Form>
 
-      <Separator />
+      {!isInitialProfileSetup && (
+        <>
+          <Separator />
 
-      <h3 className="text-xl font-bold text-gray-800 dark:text-white">Change Password</h3>
-      <Form {...passwordForm}>
-        <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
-          <FormField
-            control={passwordForm.control}
-            name="new_password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="Enter new password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={passwordForm.control}
-            name="confirm_password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm New Password</FormLabel>
-                <FormControl>
-                  <Input type="password" placeholder="Confirm new password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="w-full" disabled={isPasswordSubmitting}>
-            {isPasswordSubmitting ? 'Changing Password...' : 'Change Password'}
-          </Button>
-        </form>
-      </Form>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white">Change Password</h3>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
+              <FormField
+                control={passwordForm.control}
+                name="new_password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Enter new password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="confirm_password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Confirm new password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isPasswordSubmitting}>
+                {isPasswordSubmitting ? 'Changing Password...' : 'Change Password'}
+              </Button>
+            </form>
+          </Form>
+        </>
+      )}
     </div>
   );
 };

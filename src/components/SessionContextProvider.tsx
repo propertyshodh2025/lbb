@@ -38,14 +38,14 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
         if (profileError) {
           console.error("Error fetching profile on auth state change:", profileError);
           showError("Failed to load user profile.");
-          setProfile(null);
+          setProfile(null); // Profile is null if there's an error
         } else {
           setProfile(profileData);
         }
 
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           if (window.location.pathname === '/login') {
-            navigate('/');
+            navigate('/'); // Redirect to home if logged in and on login page
           }
         }
       } else {
@@ -53,7 +53,7 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
         setUser(null);
         setProfile(null);
         if (window.location.pathname !== '/login') {
-          navigate('/login');
+          navigate('/login'); // Only redirect to login if no session and not already on login page
         }
       }
       setIsLoading(false); // Ensure loading is false after any auth state change
@@ -86,7 +86,7 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           if (profileError) {
             console.error("Error fetching initial profile:", profileError);
             showError("Failed to load user profile.");
-            setProfile(null);
+            setProfile(null); // Profile is null if there's an error
           } else {
             setProfile(profileData);
           }
