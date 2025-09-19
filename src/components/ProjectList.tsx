@@ -24,16 +24,17 @@ interface Project {
 
 interface ProjectListProps {
   refreshTrigger?: boolean; // Prop to trigger re-fetch
+  filterByClientId?: string | null; // New prop to filter projects by client ID
 }
 
-const ProjectList = ({ refreshTrigger }: ProjectListProps) => {
+const ProjectList = ({ refreshTrigger, filterByClientId = null }: ProjectListProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
       setIsLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('projects')
         .select(`
           id,
@@ -48,6 +49,12 @@ const ProjectList = ({ refreshTrigger }: ProjectListProps) => {
         `)
         .order('created_at', { ascending: false });
 
+      if (filterByClientId) {
+        query = query.eq('client_id', filterByClientId);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         console.error('Error fetching projects:', error);
         showError('Failed to load projects.');
@@ -59,7 +66,7 @@ const ProjectList = ({ refreshTrigger }: ProjectListProps) => {
     };
 
     fetchProjects();
-  }, [refreshTrigger]); // Re-fetch when refreshTrigger changes
+  }, [refreshTrigger, filterByClientId]); // Re-fetch when refreshTrigger or filterByClientId changes
 
   if (isLoading) {
     return (
