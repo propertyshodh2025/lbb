@@ -1,13 +1,19 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import UserManagementList from '@/components/UserManagementList';
+import AddUserForm from '@/components/AddUserForm'; // Import the new component
 import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const UserManagementPage = () => {
   const { profile, isLoading } = useSession();
+  const [userListRefreshTrigger, setUserListRefreshTrigger] = useState(false); // State to trigger user list refresh
+
+  const handleUserAdded = () => {
+    setUserListRefreshTrigger(!userListRefreshTrigger); // Toggle to trigger a re-fetch of the user list
+  };
 
   if (isLoading) {
     return (
@@ -49,7 +55,14 @@ const UserManagementPage = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">Manage user roles and accounts.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <UserManagementList />
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New User</h3>
+            <AddUserForm onUserAdded={handleUserAdded} />
+          </div>
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Existing Users</h3>
+            <UserManagementList refreshTrigger={userListRefreshTrigger} />
+          </div>
         </CardContent>
       </Card>
     </div>
