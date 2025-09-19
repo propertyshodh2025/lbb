@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useSession } from './SessionContextProvider'; // Import useSession
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'Task title is required.' }),
@@ -45,7 +46,7 @@ interface Editor {
 
 interface EditTaskFormProps {
   taskId: string;
-  initialData: TaskFormValues;
+  initialData: TaskFormValues & { currentStatus: string }; // Include currentStatus
   onTaskUpdated: () => void;
   onClose: () => void;
 }
@@ -53,6 +54,8 @@ interface EditTaskFormProps {
 const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskFormProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
+  const { user, isLoading: isSessionLoading } = useSession(); // Get current user
+
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData,
@@ -94,8 +97,13 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
   }, [initialData, form]);
 
   const onSubmit = async (values: TaskFormValues) => {
+    if (!user) {
+      showError('You must be logged in to update a task.');
+      return;
+    }
+
     const assignedToUuid = values.assigned_to === '' ? null : values.assigned_to;
-    const newStatus = assignedToUuid ? 'Assigned' : 'Unassigned'; // Update status based on assignment
+    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received'; // Update status based on assignment
 
     const { error } = await supabase
       .from('tasks')
@@ -103,7 +111,7 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
         title: values.title,
         project_id: values.project_id,
         assigned_to: assignedToUuid,
-        status: newStatus,
+        status: newStatus, // Update status based on assignment
         updated_at: new Date().toISOString(),
       })
       .eq('id', taskId);
@@ -112,6 +120,20 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
       console.error('Error updating task:', error);
       showError('Failed to update task.');
     } else {
+      // Insert into task_status_history if status or assignment changed
+      if (newStatus !== initialData.currentStatus || assignedToUuid !== initialData.assigned_to) {
+        const { error: historyError } = await supabase.from('task_status_history').insert({
+          task_id: taskId,
+          status: newStatus,
+          notes: `Task details updated. Status changed to ${newStatus}${assignedToUuid ? ` and assigned to editor.` : ''}`,
+          updated_by: user.id,
+        });
+
+        if (historyError) {
+          console.error('Error adding task history:', historyError);
+        }
+      }
+
       showSuccess('Task updated successfully!');
       onTaskUpdated(); // Notify parent component
       onClose(); // Close the dialog
@@ -183,7 +205,7 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isSessionLoading}>
           Update Task
         </Button>
       </form>

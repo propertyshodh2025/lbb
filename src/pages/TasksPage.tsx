@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSession } from '@/components/SessionContextProvider';
 import { Skeleton } from '@/components/ui/skeleton';
-import TaskList from '@/components/TaskList';
 import AddTaskForm from '@/components/AddTaskForm';
+import KanbanBoard from '@/components/KanbanBoard'; // Import KanbanBoard
 import {
   Select,
   SelectContent,
@@ -37,7 +37,20 @@ interface Editor {
   last_name: string;
 }
 
-const TASK_STATUSES_FILTER = ['all', 'Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
+interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  due_date: string | null;
+  created_at: string;
+  project_id: string | null;
+  assigned_to: string | null;
+  projects: { title: string } | null;
+  profiles: { id: string; first_name: string; last_name: string; role: string } | null;
+}
+
+const TASK_STATUSES_FILTER = ['all', 'Raw files received', 'Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
 const SORT_OPTIONS = [
   { value: 'created_at', label: 'Created Date' },
   { value: 'updated_at', label: 'Last Updated' },
@@ -46,8 +59,9 @@ const SORT_OPTIONS = [
 ];
 
 const TasksPage = () => {
-  const { profile, isLoading: isSessionLoading } = useSession();
-  const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false);
+  const { profile, isLoading: isSessionLoading, user } = useSession();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isTasksLoading, setIsTasksLoading] = useState(true);
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = useState(false);
 
   const [projects, setProjects] = useState<Project[]>([]);
@@ -61,56 +75,134 @@ const TasksPage = () => {
   const canViewTasks = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'editor');
   const canAddTasks = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager');
 
-  useEffect(() => {
+  const fetchTasksAndFilters = async () => {
     if (!canViewTasks) return;
 
-    const fetchData = async () => {
-      // Fetch projects
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('id, title')
-        .order('title', { ascending: true });
+    setIsTasksLoading(true);
 
-      if (projectsError) {
-        console.error('Error fetching projects:', projectsError);
-        showError('Failed to load projects for filter.');
+    // Fetch projects
+    const { data: projectsData, error: projectsError } = await supabase
+      .from('projects')
+      .select('id, title')
+      .order('title', { ascending: true });
+
+    if (projectsError) {
+      console.error('Error fetching projects:', projectsError);
+      showError('Failed to load projects for filter.');
+    } else {
+      setProjects(projectsData || []);
+    }
+
+    // Fetch editors
+    const { data: editorsData, error: editorsError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name')
+      .eq('role', 'editor');
+
+    if (editorsError) {
+      console.error('Error fetching editors:', editorsError);
+      showError('Failed to load editors for filter.');
+    } else {
+      setEditors(editorsData || []);
+    }
+
+    // Fetch tasks
+    let query = supabase
+      .from('tasks')
+      .select(`
+        id,
+        title,
+        description,
+        status,
+        due_date,
+        created_at,
+        project_id,
+        assigned_to,
+        projects (title),
+        profiles (id, first_name, last_name, role)
+      `);
+
+    if (selectedAssignedToFilter !== 'all') {
+      if (selectedAssignedToFilter === 'unassigned') {
+        query = query.is('assigned_to', null);
       } else {
-        setProjects(projectsData || []);
+        query = query.eq('assigned_to', selectedAssignedToFilter);
       }
+    }
+    if (selectedProjectFilter !== 'all') {
+      query = query.eq('project_id', selectedProjectFilter);
+    }
+    if (selectedStatusFilter !== 'all') {
+      query = query.eq('status', selectedStatusFilter);
+    }
 
-      // Fetch editors
-      const { data: editorsData, error: editorsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('role', 'editor');
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-      if (editorsError) {
-        console.error('Error fetching editors:', editorsError);
-        showError('Failed to load editors for filter.');
-      } else {
-        setEditors(editorsData || []);
-      }
-    };
-    fetchData();
-  }, [canViewTasks]);
+    const { data: tasksData, error: tasksError } = await query;
+
+    if (tasksError) {
+      console.error('Error fetching tasks:', tasksError);
+      showError('Failed to load tasks.');
+      setTasks([]);
+    } else {
+      setTasks(tasksData || []);
+    }
+    setIsTasksLoading(false);
+  };
+
+  useEffect(() => {
+    fetchTasksAndFilters();
+  }, [
+    isSessionLoading,
+    profile,
+    selectedStatusFilter,
+    selectedProjectFilter,
+    selectedAssignedToFilter,
+    sortBy,
+    sortOrder,
+    isAddTaskDialogOpen // Re-fetch when add task dialog closes
+  ]);
 
   const handleTaskAdded = () => {
-    setTaskRefreshTrigger(prev => !prev); // Toggle to trigger a re-fetch
+    fetchTasksAndFilters(); // Re-fetch tasks after a new task is added
     setIsAddTaskDialogOpen(false); // Close the dialog
   };
 
   const handleTaskUpdated = () => {
-    setTaskRefreshTrigger(prev => !prev); // Toggle to trigger a re-fetch
+    fetchTasksAndFilters(); // Re-fetch tasks after a task is updated (e.g., via Kanban)
   };
 
   const toggleSortOrder = () => {
     setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
   };
 
-  if (isSessionLoading) {
+  const kanbanColumns = [
+    {
+      id: 'raw-files-unassigned',
+      title: 'Raw Files / Unassigned',
+      statusMap: ['Raw files received', 'Unassigned'],
+      assignedToId: null,
+      color: 'bg-blue-50 dark:bg-blue-950',
+    },
+    ...editors.map(editor => ({
+      id: editor.id,
+      title: `${editor.first_name} ${editor.last_name}`,
+      statusMap: ['Assigned', 'In Progress', 'Under Review'],
+      assignedToId: editor.id,
+      color: 'bg-yellow-50 dark:bg-yellow-950',
+    })),
+    {
+      id: 'completed',
+      title: 'Completed',
+      statusMap: ['Completed'],
+      color: 'bg-green-50 dark:bg-green-950',
+    },
+  ];
+
+  if (isSessionLoading || isTasksLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-4xl">
+        <Card className="w-full max-w-6xl dark:bg-gray-800">
           <CardHeader>
             <Skeleton className="h-8 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2" />
@@ -118,6 +210,11 @@ const TasksPage = () => {
           <CardContent className="space-y-4">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
+            <div className="flex gap-4 overflow-hidden">
+              <Skeleton className="h-64 w-1/3" />
+              <Skeleton className="h-64 w-1/3" />
+              <Skeleton className="h-64 w-1/3" />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -127,7 +224,7 @@ const TasksPage = () => {
   if (!canViewTasks) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">Access Denied</CardTitle>
           </CardHeader>
@@ -141,7 +238,7 @@ const TasksPage = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-6xl shadow-lg mt-8 mb-8">
+      <Card className="w-full max-w-6xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Task Management</CardTitle>
           <p className="text-lg text-gray-600 dark:text-gray-400">View, filter, and manage all tasks.</p>
@@ -232,17 +329,9 @@ const TasksPage = () => {
             </Button>
           </div>
 
-          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Task List</h3>
-            <TaskList
-              refreshTrigger={taskRefreshTrigger}
-              filterByStatus={selectedStatusFilter === 'all' ? null : selectedStatusFilter}
-              filterByProjectId={selectedProjectFilter === 'all' ? null : selectedProjectFilter}
-              filterByAssignedTo={selectedAssignedToFilter === 'all' ? null : (selectedAssignedToFilter === 'unassigned' ? 'null' : selectedAssignedToFilter)}
-              sortBy={sortBy}
-              sortOrder={sortOrder}
-              onTaskUpdated={handleTaskUpdated}
-            />
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Task Kanban Board</h3>
+            <KanbanBoard initialTasks={tasks} columns={kanbanColumns} onTaskMove={handleTaskUpdated} />
           </div>
         </CardContent>
       </Card>

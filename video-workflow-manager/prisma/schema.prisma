@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  MANAGER
+  EDITOR
+}
+
+enum TaskStatus {
+  RAW_FILES_RECEIVED
+  UNASSIGNED
+  ASSIGNED
+  IN_PROGRESS
+  DONE
+  DELIVERED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdTasks Task[]     @relation("AdminCreatedTasks")
+  assignedTasks Task[]    @relation("AssignedEditor")
+  clients      Project[] @relation("ClientProjects")
+
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  clientId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  client User   @relation("ClientProjects", fields: [clientId], references: [id], onDelete: Cascade)
+  tasks  Task[]
+
+  @@map("projects")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(RAW_FILES_RECEIVED)
+  dueDate     DateTime?
+  notes       String?
+  priority    String?    @default("Medium")
+  
+  projectId   String
+  createdById String
+  assignedToId String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User    @relation("AdminCreatedTasks", fields: [createdById], references: [id])
+  assignedTo  User?   @relation("AssignedEditor", fields: [assignedToId], references: [id])
+  
+  // Task history/timeline
+  statusHistory TaskStatusHistory[]
+
+  @@map("tasks")
+}
+
+model TaskStatusHistory {
+  id        String     @id @default(cuid())
+  taskId    String
+  status    TaskStatus
+  notes     String?
+  timestamp DateTime   @default(now())
+  updatedBy String?
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_status_history")
+}

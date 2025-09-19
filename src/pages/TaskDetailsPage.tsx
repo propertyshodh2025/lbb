@@ -63,7 +63,7 @@ interface Editor {
   last_name: string;
 }
 
-const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
+const TASK_STATUSES = ['Raw files received', 'Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
 
 const TaskDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -159,6 +159,10 @@ const TaskDetailsPage = () => {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!task || newStatus === task.status) return;
+    if (!user) {
+      showError('You must be logged in to update task status.');
+      return;
+    }
 
     setIsUpdating(true);
     const { error } = await supabase
@@ -170,6 +174,18 @@ const TaskDetailsPage = () => {
       console.error('Error updating task status:', error);
       showError('Failed to update task status.');
     } else {
+      // Insert into task_status_history
+      const { error: historyError } = await supabase.from('task_status_history').insert({
+        task_id: task.id,
+        status: newStatus,
+        notes: `Status changed to ${newStatus}.`,
+        updated_by: user.id,
+      });
+
+      if (historyError) {
+        console.error('Error adding task history:', historyError);
+      }
+
       showSuccess('Task status updated successfully!');
       setTask(prev => prev ? { ...prev, status: newStatus } : null);
     }
@@ -178,9 +194,13 @@ const TaskDetailsPage = () => {
 
   const handleAssignmentChange = async (newAssignedTo: string) => {
     if (!task) return;
+    if (!user) {
+      showError('You must be logged in to update task assignment.');
+      return;
+    }
 
     const assignedToUuid = newAssignedTo === '' ? null : newAssignedTo;
-    const newStatus = assignedToUuid ? 'Assigned' : 'Unassigned';
+    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received';
 
     if (assignedToUuid === task.assigned_to && newStatus === task.status) return;
 
@@ -194,6 +214,18 @@ const TaskDetailsPage = () => {
       console.error('Error updating task assignment:', error);
       showError('Failed to update task assignment.');
     } else {
+      // Insert into task_status_history
+      const { error: historyError } = await supabase.from('task_status_history').insert({
+        task_id: task.id,
+        status: newStatus,
+        notes: assignedToUuid ? `Task assigned to editor.` : `Task unassigned.`,
+        updated_by: user.id,
+      });
+
+      if (historyError) {
+        console.error('Error adding task history:', historyError);
+      }
+
       showSuccess('Task assignment updated successfully!');
       setTask(prev => prev ? { ...prev, assigned_to: assignedToUuid, status: newStatus } : null);
     }
@@ -207,6 +239,10 @@ const TaskDetailsPage = () => {
 
   const handleDeleteTask = async () => {
     if (!id || !task) return;
+    if (!user) {
+      showError('You must be logged in to delete a task.');
+      return;
+    }
 
     const { error } = await supabase
       .from('tasks')
@@ -217,6 +253,16 @@ const TaskDetailsPage = () => {
       console.error('Error deleting task:', error);
       showError('Failed to delete task.');
     } else {
+      // Delete associated history entries
+      const { error: historyDeleteError } = await supabase
+        .from('task_status_history')
+        .delete()
+        .eq('task_id', id);
+
+      if (historyDeleteError) {
+        console.error('Error deleting task history:', historyDeleteError);
+      }
+
       showSuccess('Task deleted successfully!');
       navigate(profile?.role === 'editor' ? '/editor' : '/manager'); // Redirect after deletion
     }
@@ -225,7 +271,7 @@ const TaskDetailsPage = () => {
   if (isLoading || isSessionLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-4xl">
+        <Card className="w-full max-w-4xl dark:bg-gray-800">
           <CardHeader>
             <Skeleton className="h-8 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2" />
@@ -243,7 +289,7 @@ const TaskDetailsPage = () => {
   if (!task) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">Task Not Found</CardTitle>
           </CardHeader>
@@ -262,11 +308,12 @@ const TaskDetailsPage = () => {
     title: task.title,
     project_id: task.project_id || '',
     assigned_to: task.assigned_to || '',
+    currentStatus: task.status, // Pass current status
   };
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8">
+      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" asChild>
@@ -379,7 +426,7 @@ const TaskDetailsPage = () => {
             </div>
           </div>
 
-          <div className="border-t pt-6 mt-6">
+          <div className="border-t pt-6 mt-6 dark:border-gray-700">
             <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200">Task Dates:</h4>
             <p className="text-gray-700 dark:text-gray-300">
               Created: {format(new Date(task.created_at), 'PPP HH:mm')}

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useSession } from './SessionContextProvider'; // Import useSession
 
 const formSchema = z.object({
   project_id: z.string().uuid({ message: 'Please select a project.' }),
@@ -51,6 +52,8 @@ interface AddTaskFormProps {
 const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
+  const { user, isLoading: isSessionLoading } = useSession(); // Get current user
+
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -101,17 +104,39 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
   }, []);
 
   const onSubmit = async (values: TaskFormValues) => {
-    const { error } = await supabase.from('tasks').insert({
+    if (!user) {
+      showError('You must be logged in to add a task.');
+      return;
+    }
+
+    const initialStatus = values.assigned_to ? 'Assigned' : 'Raw files received'; // Initial status based on assignment
+    const assignedToUuid = values.assigned_to === '' ? null : values.assigned_to;
+
+    const { data: newTaskData, error: taskError } = await supabase.from('tasks').insert({
       project_id: values.project_id,
       title: values.title,
-      assigned_to: values.assigned_to || null, // Set to null if unassigned
-      status: values.assigned_to ? 'Assigned' : 'Unassigned', // Initial status based on assignment
-    });
+      assigned_to: assignedToUuid,
+      status: initialStatus,
+      created_by: user.id, // Set created_by to the current user's ID
+    }).select().single();
 
-    if (error) {
-      console.error('Error adding task:', error);
+    if (taskError) {
+      console.error('Error adding task:', taskError);
       showError('Failed to add task.');
     } else {
+      // Insert initial status into task_status_history
+      const { error: historyError } = await supabase.from('task_status_history').insert({
+        task_id: newTaskData.id,
+        status: initialStatus,
+        notes: values.assigned_to ? `Task created and assigned to editor.` : `Task created. Raw files received.`,
+        updated_by: user.id,
+      });
+
+      if (historyError) {
+        console.error('Error adding task history:', historyError);
+        // Don't block, but log the error
+      }
+
       showSuccess('Task added successfully!');
       form.reset({
         project_id: defaultProjectId || '', // Reset to defaultProjectId or empty
@@ -187,7 +212,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isSessionLoading}>
           Add Task
         </Button>
       </form>

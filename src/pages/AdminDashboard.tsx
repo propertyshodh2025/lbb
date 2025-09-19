@@ -8,7 +8,7 @@ import AddProjectForm from '@/components/AddProjectForm';
 import UserStatsCard from '@/components/UserStatsCard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { PlusCircle, Briefcase } from 'lucide-react';
+import { PlusCircle, Briefcase, ListChecks, Users } from 'lucide-react'; // Import ListChecks and Users icons
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-2xl">
+        <Card className="w-full max-w-2xl dark:bg-gray-800">
           <CardHeader>
             <Skeleton className="h-8 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2" />
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   if (profile?.role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center dark:bg-gray-800">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">Access Denied</CardTitle>
           </CardHeader>
@@ -62,7 +62,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8">
+      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Admin Dashboard</CardTitle>
           <p className="text-lg text-gray-600 dark:text-gray-400">Manage all projects, tasks, and users.</p>
@@ -72,12 +72,17 @@ const AdminDashboard = () => {
             Welcome, Admin! Use the sections below to manage your application.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
               <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">User Overview</h3>
               <UserStatsCard />
+              <Button asChild variant="outline" className="w-full mt-4">
+                <Link to="/users">
+                  <Users className="mr-2 h-4 w-4" /> Manage Users
+                </Link>
+              </Button>
             </div>
-            <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
-              <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Actions</h3>
+            <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
+              <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project & Task Actions</h3>
               <div className="space-y-4">
                 <Dialog open={isAddProjectDialogOpen} onOpenChange={setIsAddProjectDialogOpen}>
                   <DialogTrigger asChild>
@@ -98,6 +103,11 @@ const AdminDashboard = () => {
                 <Button asChild variant="outline" className="w-full">
                   <Link to="/projects">
                     <Briefcase className="mr-2 h-4 w-4" /> View All Projects
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/tasks">
+                    <ListChecks className="mr-2 h-4 w-4" /> View All Tasks
                   </Link>
                 </Button>
               </div>

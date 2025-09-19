@@ -72,7 +72,7 @@ interface TaskListProps {
   onTaskUpdated?: () => void;
 }
 
-const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
+const TASK_STATUSES = ['Raw files received', 'Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
 
 const TaskList = ({
   refreshTrigger,
@@ -187,7 +187,12 @@ const TaskList = ({
     isEditDialogOpen
   ]);
 
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  const handleStatusChange = async (taskId: string, newStatus: string, currentAssignedTo: string | null) => {
+    if (!user) {
+      showError('You must be logged in to update task status.');
+      return;
+    }
+
     const { error } = await supabase
       .from('tasks')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
@@ -197,14 +202,31 @@ const TaskList = ({
       console.error('Error updating task status:', error);
       showError('Failed to update task status.');
     } else {
+      // Insert into task_status_history
+      const { error: historyError } = await supabase.from('task_status_history').insert({
+        task_id: taskId,
+        status: newStatus,
+        notes: `Status changed to ${newStatus}.`,
+        updated_by: user.id,
+      });
+
+      if (historyError) {
+        console.error('Error adding task history:', historyError);
+      }
+
       showSuccess('Task status updated successfully!');
       onTaskUpdated?.();
     }
   };
 
-  const handleAssignmentChange = async (taskId: string, newAssignedTo: string) => {
+  const handleAssignmentChange = async (taskId: string, newAssignedTo: string, currentStatus: string) => {
+    if (!user) {
+      showError('You must be logged in to update task assignment.');
+      return;
+    }
+
     const assignedToUuid = newAssignedTo === '' ? null : newAssignedTo;
-    const newStatus = assignedToUuid ? 'Assigned' : 'Unassigned';
+    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received'; // Update status based on assignment
 
     const { error } = await supabase
       .from('tasks')
@@ -215,12 +237,29 @@ const TaskList = ({
       console.error('Error updating task assignment:', error);
       showError('Failed to update task assignment.');
     } else {
+      // Insert into task_status_history
+      const { error: historyError } = await supabase.from('task_status_history').insert({
+        task_id: taskId,
+        status: newStatus,
+        notes: assignedToUuid ? `Task assigned to editor.` : `Task unassigned.`,
+        updated_by: user.id,
+      });
+
+      if (historyError) {
+        console.error('Error adding task history:', historyError);
+      }
+
       showSuccess('Task assignment updated successfully!');
       onTaskUpdated?.();
     }
   };
 
   const handleDeleteTask = async (taskId: string, taskTitle: string) => {
+    if (!user) {
+      showError('You must be logged in to delete a task.');
+      return;
+    }
+
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -230,6 +269,16 @@ const TaskList = ({
       console.error('Error deleting task:', error);
       showError(`Failed to delete task "${taskTitle}".`);
     } else {
+      // Delete associated history entries
+      const { error: historyDeleteError } = await supabase
+        .from('task_status_history')
+        .delete()
+        .eq('task_id', taskId);
+
+      if (historyDeleteError) {
+        console.error('Error deleting task history:', historyDeleteError);
+      }
+
       showSuccess(`Task "${taskTitle}" deleted successfully!`);
       onTaskUpdated?.();
     }
@@ -264,9 +313,9 @@ const TaskList = ({
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
-        <Card key={task.id} className="shadow-sm">
+        <Card key={task.id} className="shadow-sm dark:bg-gray-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold">
+            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
               <Link to={`/tasks/${task.id}`} className="hover:underline text-primary dark:text-primary-foreground">
                 {task.title}
               </Link>
@@ -313,7 +362,7 @@ const TaskList = ({
               <p className="text-sm text-gray-600 dark:text-gray-400">Status:</p>
               <Select
                 value={task.status}
-                onValueChange={(value) => handleStatusChange(task.id, value)}
+                onValueChange={(value) => handleStatusChange(task.id, value, task.assigned_to)}
                 disabled={!canEditTask(task)}
               >
                 <SelectTrigger className="w-[180px]">
@@ -333,7 +382,7 @@ const TaskList = ({
               <p className="text-sm text-gray-600 dark:text-gray-400">Assigned To:</p>
               <Select
                 value={task.assigned_to || ''}
-                onValueChange={(value) => handleAssignmentChange(task.id, value)}
+                onValueChange={(value) => handleAssignmentChange(task.id, value, task.status)}
                 disabled={!canReassignTask()}
               >
                 <SelectTrigger className="w-[180px]">
@@ -374,6 +423,7 @@ const TaskList = ({
                 title: currentTaskToEdit.title,
                 project_id: currentTaskToEdit.project_id || '',
                 assigned_to: currentTaskToEdit.assigned_to || '',
+                currentStatus: currentTaskToEdit.status, // Pass current status
               }}
               onTaskUpdated={handleTaskDetailsUpdated}
               onClose={() => setIsEditDialogOpen(false)}
