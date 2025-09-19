@@ -23,9 +23,14 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+  // If session exists but profile is null, redirect to complete profile page
+  // This handles cases where a user is logged in but their profile entry is missing
+  if (!profile) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(profile.role)) {
     // User is logged in but doesn't have the required role
-    // You might want to show an "Access Denied" page or redirect to a general dashboard
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-center">

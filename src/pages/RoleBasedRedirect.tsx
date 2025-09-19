@@ -16,10 +16,11 @@ const RoleBasedRedirect = () => {
         return;
       }
 
+      // Profile check is now handled by ProtectedRoute, so if we reach here, profile should exist.
+      // If for some reason it doesn't, ProtectedRoute would have redirected to /complete-profile.
       if (!profile) {
-        // If session exists but profile is null, redirect to complete profile page
-        console.warn("Session exists but profile is null. Redirecting to complete profile.");
-        navigate('/complete-profile');
+        console.error("RoleBasedRedirect: Profile is unexpectedly null after ProtectedRoute. This should not happen.");
+        navigate('/complete-profile'); // Fallback, though ProtectedRoute should catch this
         return;
       }
 
@@ -38,9 +39,8 @@ const RoleBasedRedirect = () => {
           navigate('/client');
           break;
         default:
-          // Fallback for unknown roles or if profile is still loading
           console.warn("Unknown role or profile not fully loaded:", profile?.role);
-          navigate('/complete-profile'); // Redirect to complete profile if role is not recognized
+          navigate('/complete-profile'); // Fallback for unknown roles
           break;
       }
     }

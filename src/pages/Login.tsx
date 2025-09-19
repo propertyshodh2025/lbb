@@ -4,15 +4,17 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/components/SessionContextProvider';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react'; // Import useRef
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const { session, isLoading } = useSession();
   const navigate = useNavigate();
+  const isNavigatingRef = useRef(false); // To prevent multiple navigations
 
   useEffect(() => {
-    if (!isLoading && session) {
+    if (!isLoading && session && !isNavigatingRef.current) {
+      isNavigatingRef.current = true; // Set flag
       navigate('/'); // Redirect to home if already logged in
     }
   }, [session, isLoading, navigate]);
@@ -41,8 +43,8 @@ const Login = () => {
                   brandAccent: 'hsl(var(--primary-foreground))',
                 },
               },
-            },
-          }}
+            }}
+          }
           theme="light" // Use light theme, can be dynamic later
           redirectTo={window.location.origin + '/'}
         />
