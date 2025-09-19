@@ -16,26 +16,28 @@ const NavLink = ({ to, children, className }: { to: string; children: React.Reac
 );
 
 const AppHeader = () => {
-  const { profile, isLoading } = useSession();
+  const { profile, isLoading, session } = useSession();
 
-  if (isLoading || !profile) {
-    return null; // Don't render header until session and profile are loaded
+  if (isLoading || !session) { // Only render header if session is loading or exists
+    return null; 
   }
 
   const getNavLinks = () => {
     const links = [];
-    if (profile.role === 'admin') {
-      links.push({ to: '/admin', label: 'Admin Dashboard' });
-      links.push({ to: '/manager', label: 'Manager Dashboard' });
-      links.push({ to: '/editor', label: 'Editor Dashboard' });
-      links.push({ to: '/client-view', label: 'Client Dashboard' }); // Admin can view client dashboard
-    } else if (profile.role === 'manager') {
-      links.push({ to: '/manager', label: 'Manager Dashboard' });
-      links.push({ to: '/editor', label: 'Editor Dashboard' }); // Manager can view editor dashboard
-    } else if (profile.role === 'editor') {
-      links.push({ to: '/editor', label: 'Editor Dashboard' });
-    } else if (profile.role === 'client') {
-      links.push({ to: '/client', label: 'My Projects' });
+    if (profile) { // Only add role-specific links if profile is loaded
+      if (profile.role === 'admin') {
+        links.push({ to: '/admin', label: 'Admin Dashboard' });
+        links.push({ to: '/manager', label: 'Manager Dashboard' });
+        links.push({ to: '/editor', label: 'Editor Dashboard' });
+        links.push({ to: '/client', label: 'Client Dashboard' }); // Admin can view client dashboard
+      } else if (profile.role === 'manager') {
+        links.push({ to: '/manager', label: 'Manager Dashboard' });
+        links.push({ to: '/editor', label: 'Editor Dashboard' }); // Manager can view editor dashboard
+      } else if (profile.role === 'editor') {
+        links.push({ to: '/editor', label: 'Editor Dashboard' });
+      } else if (profile.role === 'client') {
+        links.push({ to: '/client', label: 'My Projects' });
+      }
     }
     return links;
   };
@@ -54,7 +56,8 @@ const AppHeader = () => {
               {link.label}
             </NavLink>
           ))}
-          <LogoutButton />
+          {session && <NavLink to="/profile">My Profile</NavLink>} {/* Always show My Profile if logged in */}
+          {session && <LogoutButton />}
         </nav>
         <div className="md:hidden">
           <Sheet>
@@ -71,7 +74,8 @@ const AppHeader = () => {
                     {link.label}
                   </NavLink>
                 ))}
-                <LogoutButton />
+                {session && <NavLink to="/profile" className="text-lg">My Profile</NavLink>}
+                {session && <LogoutButton />}
               </nav>
             </SheetContent>
           </Sheet>
