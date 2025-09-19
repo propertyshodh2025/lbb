@@ -5,9 +5,9 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle } from 'lucide-react';
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks } from 'lucide-react'; // Import ListChecks icon
 import { cn } from '@/lib/utils';
-import UserNav from './UserNav'; // Import UserNav
+import UserNav from './UserNav';
 
 interface NavItem {
   to: string;
@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
+  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] }, // New navigation item
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];
@@ -49,8 +50,8 @@ const AppHeader = () => {
         <Link to="/" className="text-lg font-bold text-primary">
           ProjectFlow
         </Link>
-        <div className="flex items-center gap-2"> {/* Added flex container for UserNav and SheetTrigger */}
-          {session && <UserNav />} {/* Use UserNav here */}
+        <div className="flex items-center gap-2">
+          {session && <UserNav />}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">

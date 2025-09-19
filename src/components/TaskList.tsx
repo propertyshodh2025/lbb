@@ -14,9 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button'; // Import Button
-import { Trash2, Edit } from 'lucide-react'; // Import Trash2 and Edit icons
-import { // Import AlertDialog components
+import { Button } from '@/components/ui/button';
+import { Trash2, Edit } from 'lucide-react';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,14 +28,14 @@ import { // Import AlertDialog components
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Dialog, // Import Dialog components
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import EditTaskForm from './EditTaskForm'; // Import the EditTaskForm
+import EditTaskForm from './EditTaskForm';
 
 interface Task {
   id: string;
@@ -66,17 +66,28 @@ interface TaskListProps {
   refreshTrigger?: boolean;
   filterByAssignedTo?: string | null;
   filterByProjectId?: string | null;
+  filterByStatus?: string | null; // New filter prop
+  sortBy?: string; // New sort prop
+  sortOrder?: 'asc' | 'desc'; // New sort prop
   onTaskUpdated?: () => void;
 }
 
 const TASK_STATUSES = ['Unassigned', 'Assigned', 'In Progress', 'Completed', 'Under Review'];
 
-const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId = null, onTaskUpdated }: TaskListProps) => {
+const TaskList = ({
+  refreshTrigger,
+  filterByAssignedTo = null,
+  filterByProjectId = null,
+  filterByStatus = null, // Default to null
+  sortBy = 'created_at', // Default sort by created_at
+  sortOrder = 'desc', // Default sort order
+  onTaskUpdated
+}: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
-  const [currentTaskToEdit, setCurrentTaskToEdit] = useState<Task | null>(null); // State to hold task being edited
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentTaskToEdit, setCurrentTaskToEdit] = useState<Task | null>(null);
   const { user, profile, isLoading: isSessionLoading } = useSession();
 
   const canEditTask = (task: Task) => {
@@ -90,7 +101,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     return false;
   };
 
-  const canEditTaskDetails = () => { // New function to check if user can edit task details (title, project, assignment)
+  const canEditTaskDetails = () => {
     if (isSessionLoading || !profile) return false;
     return profile.role === 'admin' || profile.role === 'manager';
   };
@@ -121,15 +132,23 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
           assigned_to,
           projects (title),
           profiles (id, first_name, last_name, role)
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       if (filterByAssignedTo) {
-        query = query.eq('assigned_to', filterByAssignedTo);
+        if (filterByAssignedTo === 'unassigned') {
+          query = query.is('assigned_to', null);
+        } else {
+          query = query.eq('assigned_to', filterByAssignedTo);
+        }
       }
       if (filterByProjectId) {
         query = query.eq('project_id', filterByProjectId);
       }
+      if (filterByStatus) {
+        query = query.eq('status', filterByStatus);
+      }
+
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
       const { data: tasksData, error: tasksError } = await query;
 
@@ -157,7 +176,16 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
     };
 
     fetchTasksAndEditors();
-  }, [refreshTrigger, filterByAssignedTo, filterByProjectId, isSessionLoading, isEditDialogOpen]); // Re-fetch when dialog closes
+  }, [
+    refreshTrigger,
+    filterByAssignedTo,
+    filterByProjectId,
+    filterByStatus,
+    sortBy,
+    sortOrder,
+    isSessionLoading,
+    isEditDialogOpen
+  ]);
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     const { error } = await supabase
@@ -203,7 +231,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
       showError(`Failed to delete task "${taskTitle}".`);
     } else {
       showSuccess(`Task "${taskTitle}" deleted successfully!`);
-      onTaskUpdated?.(); // Notify parent to refresh the list
+      onTaskUpdated?.();
     }
   };
 
@@ -213,8 +241,8 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
   };
 
   const handleTaskDetailsUpdated = () => {
-    onTaskUpdated?.(); // Trigger a refresh of the task list
-    setIsEditDialogOpen(false); // Close the dialog
+    onTaskUpdated?.();
+    setIsEditDialogOpen(false);
   };
 
   if (isLoading || isSessionLoading) {
@@ -229,7 +257,7 @@ const TaskList = ({ refreshTrigger, filterByAssignedTo = null, filterByProjectId
 
   if (tasks.length === 0) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400">No tasks found.</p>
+      <p className="text-center text-gray-500 dark:text-gray-400">No tasks found matching the criteria.</p>
     );
   }
 

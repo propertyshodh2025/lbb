@@ -5,8 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import UserNav from './UserNav'; // Import UserNav
+import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks } from 'lucide-react'; // Import ListChecks icon
+import UserNav from './UserNav';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface NavItem {
@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
+  { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] }, // New navigation item
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];
@@ -32,7 +33,7 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (isLoading || !session) {
-    return null; // Don't render sidebar if not authenticated or loading
+    return null;
   }
 
   const filteredNavItems = navItems.filter(item =>
@@ -76,7 +77,7 @@ const Sidebar = () => {
         ))}
       </nav>
       <div className="mt-auto pt-4 border-t border-sidebar-border flex flex-col items-center gap-2">
-        {session && <UserNav isCollapsed={isCollapsed} />} {/* Use UserNav here */}
+        {session && <UserNav isCollapsed={isCollapsed} />}
         <Collapsible
           open={!isCollapsed}
           onOpenChange={setIsCollapsed}
