@@ -32,7 +32,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   role: string;
-  email: string; // Assuming email can be fetched or derived
+  email: string;
 }
 
 interface UserManagementListProps {
@@ -51,51 +51,41 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
 
   const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu'; // Your Supabase Project ID
   const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
+  const LIST_USERS_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/list-users`; // New Edge Function URL
 
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, role');
+      try {
+        const response = await fetch(LIST_USERS_FUNCTION_URL, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`, // Pass the user's JWT
+          },
+        });
 
-      if (profilesError) {
-        console.error('Error fetching user profiles:', profilesError);
-        showError('Failed to load user profiles.');
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error('Error from list-users Edge Function:', result.error);
+          showError(`Failed to load user profiles: ${result.error}`);
+          setUsers([]);
+          return;
+        }
+        
+        setUsers(result || []);
+      } catch (error) {
+        console.error('Error invoking list-users Edge Function:', error);
+        showError('An unexpected error occurred while loading user profiles.');
         setUsers([]);
+      } finally {
         setIsLoading(false);
-        return;
       }
-
-      // Fetch user emails from auth.users table (requires service role key or RLS on auth.users)
-      // For simplicity, we'll assume the email is available or can be fetched.
-      // In a real app, you might need a server-side function or a more complex RLS setup
-      // to expose emails to admins. For now, we'll mock it or fetch if possible.
-      const userIds = profilesData.map(p => p.id);
-      const { data: authUsersData, error: authUsersError } = await supabase.auth.admin.listUsers();
-
-      let usersWithEmails: UserProfile[] = [];
-      if (authUsersError) {
-        console.warn('Could not fetch auth.users for emails (might need service role key or specific RLS):', authUsersError.message);
-        // Fallback: create profiles without emails
-        usersWithEmails = profilesData.map(profile => ({
-          ...profile,
-          email: 'Email not available', // Placeholder
-        }));
-      } else {
-        const authUsersMap = new Map(authUsersData.users.map(u => [u.id, u.email]));
-        usersWithEmails = profilesData.map(profile => ({
-          ...profile,
-          email: authUsersMap.get(profile.id) || 'Email not found',
-        }));
-      }
-      
-      setUsers(usersWithEmails || []);
-      setIsLoading(false);
     };
 
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading]);
+  }, [refreshTrigger, isSessionLoading, session?.access_token]); // Depend on session.access_token
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!canEditRoles) {
