@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react'; // Import Edit icon
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog, // Import Dialog components
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import EditUserForm from './EditUserForm'; // Import the new EditUserForm
 
 interface UserProfile {
   id: string;
@@ -33,6 +42,7 @@ interface UserProfile {
   last_name: string | null;
   role: string;
   email: string;
+  avatar_url: string | null; // Add avatar_url to UserProfile
 }
 
 interface UserManagementListProps {
@@ -44,9 +54,12 @@ const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
 const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
+  const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null); // State to hold user being edited
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
   const canEditRoles = !isSessionLoading && currentUserProfile?.role === 'admin';
+  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin'; // Only admins can edit user details
   const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
 
   const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu'; // Your Supabase Project ID
@@ -85,7 +98,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     };
 
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading, session?.access_token]); // Depend on session.access_token
+  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen]); // Depend on session.access_token and isEditDialogOpen
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     if (!canEditRoles) {
@@ -168,6 +181,20 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     }
   };
 
+  const handleEditClick = (user: UserProfile) => {
+    setCurrentUserToEdit(user);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUserUpdated = () => {
+    // Trigger a refresh of the user list
+    // This will cause the useEffect to re-fetch users, including updated profile data
+    setUsers([]); // Clear current users to force re-fetch
+    setIsLoading(true); // Set loading state
+    // The useEffect will handle the actual fetching
+    setIsEditDialogOpen(false); // Close the dialog
+  };
+
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
@@ -192,36 +219,44 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
             <CardTitle className="text-xl font-semibold">
               {user.first_name} {user.last_name}
             </CardTitle>
-            {canDeleteUsers && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete User</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the user
-                      "{user.first_name} {user.last_name} ({user.email})" and all associated data.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <div className="flex items-center gap-2">
+              {canEditUserDetails && (
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(user)}>
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit User Details</span>
+                </Button>
+              )}
+              {canDeleteUsers && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete User</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the user
+                        "{user.first_name} {user.last_name} ({user.email})" and all associated data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
@@ -247,6 +282,30 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
           </CardContent>
         </Card>
       ))}
+
+      {currentUserToEdit && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User Profile</DialogTitle>
+              <DialogDescription>
+                Make changes to the user's profile details here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <EditUserForm
+              userId={currentUserToEdit.id}
+              initialData={{
+                first_name: currentUserToEdit.first_name || '',
+                last_name: currentUserToEdit.last_name || '',
+                avatar_url: currentUserToEdit.avatar_url || '',
+                email: currentUserToEdit.email, // Pass email for display
+              }}
+              onUserUpdated={handleUserUpdated}
+              onClose={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
