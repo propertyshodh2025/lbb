@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
@@ -13,7 +13,18 @@ import ProjectStatusHistory from '@/components/ProjectStatusHistory';
 import AddTaskForm from '@/components/AddTaskForm';
 import TaskList from '@/components/TaskList';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { // Import AlertDialog components
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Project {
   id: string;
@@ -32,6 +43,7 @@ interface Project {
 
 const ProjectDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [taskRefreshTrigger, setTaskRefreshTrigger] = useState(false);
@@ -39,6 +51,7 @@ const ProjectDetailsPage = () => {
   const { profile, isLoading: isSessionLoading } = useSession();
 
   const canManageProjects = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager');
+  const canDeleteProject = !isSessionLoading && profile?.role === 'admin'; // Only admins can delete
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
@@ -80,6 +93,23 @@ const ProjectDetailsPage = () => {
 
   const handleProjectStatusUpdated = () => {
     setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to refresh project details and history
+  };
+
+  const handleDeleteProject = async () => {
+    if (!id) return;
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      showError('Failed to delete project.');
+    } else {
+      showSuccess('Project deleted successfully!');
+      navigate('/admin'); // Redirect to admin dashboard after deletion
+    }
   };
 
   if (isLoading || isSessionLoading) {
@@ -132,7 +162,31 @@ const ProjectDetailsPage = () => {
             <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white text-center flex-grow">
               {project.title}
             </CardTitle>
-            <div className="w-32"></div> {/* Spacer to balance the back button */}
+            {canDeleteProject && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon" className="ml-4">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete Project</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the project
+                      "{project.title}" and all associated tasks and status history.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteProject} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
           <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
             Client: {project.profiles ? `${project.profiles.first_name} ${project.profiles.last_name}` : 'N/A'}
