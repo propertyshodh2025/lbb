@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle } from 'lucide-react';
+import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import LogoutButton from './LogoutButton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface NavItem {
   to: string;
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
 const Sidebar = () => {
   const { profile, isLoading, session } = useSession();
   const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (isLoading || !session) {
     return null; // Don't render sidebar if not authenticated or loading
@@ -37,11 +39,21 @@ const Sidebar = () => {
   );
 
   return (
-    <aside className="hidden md:flex flex-col w-64 border-r bg-sidebar text-sidebar-foreground p-4">
+    <aside
+      className={cn(
+        "hidden md:flex flex-col border-r bg-sidebar text-sidebar-foreground p-4 transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-64"
+      )}
+    >
       <div className="flex items-center justify-center h-16 border-b">
-        <Link to="/" className="text-xl font-bold text-sidebar-primary">
+        <Link to="/" className={cn("text-xl font-bold text-sidebar-primary", isCollapsed && "hidden")}>
           ProjectFlow
         </Link>
+        {isCollapsed && (
+          <Link to="/" className="text-xl font-bold text-sidebar-primary">
+            PF
+          </Link>
+        )}
       </div>
       <nav className="flex-1 py-4 space-y-2">
         {filteredNavItems.map((item) => (
@@ -50,19 +62,36 @@ const Sidebar = () => {
             variant="ghost"
             className={cn(
               "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              location.pathname === item.to && "bg-sidebar-accent text-sidebar-accent-foreground"
+              location.pathname === item.to && "bg-sidebar-accent text-sidebar-accent-foreground",
+              isCollapsed ? "px-2 justify-center" : "px-4"
             )}
             asChild
           >
             <Link to={item.to}>
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.label}
+              <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+              {!isCollapsed && item.label}
             </Link>
           </Button>
         ))}
       </nav>
-      <div className="mt-auto pt-4 border-t border-sidebar-border">
+      <div className="mt-auto pt-4 border-t border-sidebar-border flex flex-col items-center gap-2">
         <LogoutButton />
+        <Collapsible
+          open={!isCollapsed}
+          onOpenChange={setIsCollapsed}
+          className="w-full"
+        >
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            >
+              {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              <span className="sr-only">{isCollapsed ? 'Expand' : 'Collapse'} Sidebar</span>
+            </Button>
+          </CollapsibleTrigger>
+        </Collapsible>
       </div>
     </aside>
   );
