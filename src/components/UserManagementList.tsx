@@ -68,12 +68,12 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null);
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
+  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
+  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
+
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState('first_name');
   const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
-
-  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
-  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
 
   useEffect(() => {
     const fetchUsers = async () => {
