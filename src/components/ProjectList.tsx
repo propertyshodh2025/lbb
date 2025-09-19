@@ -10,7 +10,7 @@ import { useSession } from '@/components/SessionContextProvider'; // Import useS
 import UpdateProjectStatusForm from './UpdateProjectStatusForm'; // Import the new component
 import { Link } from 'react-router-dom'; // Import Link
 import { Button } from '@/components/ui/button'; // Import Button
-import { Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { Trash2, Edit } from 'lucide-react'; // Import Trash2 and Edit icons
 import { // Import AlertDialog components
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +22,15 @@ import { // Import AlertDialog components
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog, // Import Dialog components
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import EditProjectForm from '@/components/EditProjectForm'; // Import the new EditProjectForm
 
 interface Project {
   id: string;
@@ -47,6 +56,8 @@ interface ProjectListProps {
 const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated }: ProjectListProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
+  const [currentProjectToEdit, setCurrentProjectToEdit] = useState<Project | null>(null); // State to hold project being edited
   const { profile, isLoading: isSessionLoading } = useSession(); // Get session and profile
 
   useEffect(() => {
@@ -84,7 +95,7 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
     };
 
     fetchProjects();
-  }, [refreshTrigger, filterByClientId]); // Re-fetch when refreshTrigger or filterByClientId changes
+  }, [refreshTrigger, filterByClientId, isEditDialogOpen]); // Re-fetch when refreshTrigger, filterByClientId, or dialog closes changes
 
   const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';
   const canDeleteProject = profile?.role === 'admin'; // Only admins can delete projects
@@ -102,6 +113,16 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
       showSuccess(`Project "${projectTitle}" deleted successfully!`);
       onProjectUpdated?.(); // Notify parent to refresh the list
     }
+  };
+
+  const handleEditClick = (project: Project) => {
+    setCurrentProjectToEdit(project);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleProjectDetailsUpdated = () => {
+    onProjectUpdated?.(); // Trigger a refresh of the project list
+    setIsEditDialogOpen(false); // Close the dialog
   };
 
   if (isLoading || isSessionLoading) {
@@ -130,31 +151,39 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
                 {project.title}
               </Link>
             </CardTitle>
-            {canDeleteProject && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="icon" className="h-8 w-8">
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete Project</span>
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the project
-                      "{project.title}" and all associated tasks and status history.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDeleteProject(project.id, project.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+            <div className="flex items-center gap-2">
+              {canManageProjects && (
+                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(project)}>
+                  <Edit className="h-4 w-4" />
+                  <span className="sr-only">Edit Project</span>
+                </Button>
+              )}
+              {canDeleteProject && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon" className="h-8 w-8">
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete Project</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the project
+                        "{project.title}" and all associated tasks and status history.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProject(project.id, project.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -183,6 +212,31 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
           </CardContent>
         </Card>
       ))}
+
+      {currentProjectToEdit && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Project</DialogTitle>
+              <DialogDescription>
+                Make changes to the project details here. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <EditProjectForm
+              projectId={currentProjectToEdit.id}
+              initialData={{
+                title: currentProjectToEdit.title,
+                description: currentProjectToEdit.description || '',
+                client_id: currentProjectToEdit.client_id,
+                due_date: currentProjectToEdit.due_date ? new Date(currentProjectToEdit.due_date) : null,
+                notes: currentProjectToEdit.notes || '',
+              }}
+              onProjectUpdated={handleProjectDetailsUpdated}
+              onClose={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
