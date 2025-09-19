@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -17,6 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import EditTaskForm from '@/components/EditTaskForm'; // Import the new EditTaskForm
 
 interface Task {
   id: string;
@@ -51,11 +60,21 @@ const TaskDetailsPage = () => {
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
   const { user, profile, isLoading: isSessionLoading } = useSession();
 
-  const canEditTask = (currentTask: Task | null) => {
+  const canEditTaskDetails = (currentTask: Task | null) => {
     if (isSessionLoading || !profile || !currentTask) return false;
-    // Admins and Managers can edit any task
+    // Admins and Managers can edit any task details
+    if (profile.role === 'admin' || profile.role === 'manager') {
+      return true;
+    }
+    return false;
+  };
+
+  const canEditTaskStatus = (currentTask: Task | null) => {
+    if (isSessionLoading || !profile || !currentTask) return false;
+    // Admins and Managers can edit any task status
     if (profile.role === 'admin' || profile.role === 'manager') {
       return true;
     }
@@ -72,54 +91,54 @@ const TaskDetailsPage = () => {
     return profile.role === 'admin' || profile.role === 'manager';
   };
 
+  const fetchTaskDetailsAndEditors = async () => {
+    if (!id) return;
+
+    setIsLoading(true);
+    // Fetch task details
+    const { data: taskData, error: taskError } = await supabase
+      .from('tasks')
+      .select(`
+        id,
+        title,
+        status,
+        created_at,
+        updated_at,
+        project_id,
+        assigned_to,
+        projects (title),
+        profiles (id, first_name, last_name, role)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (taskError) {
+      console.error('Error fetching task details:', taskError);
+      showError('Failed to load task details.');
+      setTask(null);
+    } else {
+      setTask(taskData);
+    }
+
+    // Fetch editors for assignment dropdown
+    const { data: editorsData, error: editorsError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name')
+      .eq('role', 'editor');
+
+    if (editorsError) {
+      console.error('Error fetching editors:', editorsError);
+      showError('Failed to load editors for assignment.');
+    } else {
+      setEditors(editorsData || []);
+    }
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchTaskDetailsAndEditors = async () => {
-      if (!id) return;
-
-      setIsLoading(true);
-      // Fetch task details
-      const { data: taskData, error: taskError } = await supabase
-        .from('tasks')
-        .select(`
-          id,
-          title,
-          status,
-          created_at,
-          updated_at,
-          project_id,
-          assigned_to,
-          projects (title),
-          profiles (id, first_name, last_name, role)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (taskError) {
-        console.error('Error fetching task details:', taskError);
-        showError('Failed to load task details.');
-        setTask(null);
-      } else {
-        setTask(taskData);
-      }
-
-      // Fetch editors for assignment dropdown
-      const { data: editorsData, error: editorsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('role', 'editor');
-
-      if (editorsError) {
-        console.error('Error fetching editors:', editorsError);
-        showError('Failed to load editors for assignment.');
-      } else {
-        setEditors(editorsData || []);
-      }
-
-      setIsLoading(false);
-    };
-
     fetchTaskDetailsAndEditors();
-  }, [id]);
+  }, [id, isEditDialogOpen]); // Re-fetch when ID changes or edit dialog closes
 
   const handleStatusChange = async (newStatus: string) => {
     if (!task || newStatus === task.status) return;
@@ -164,6 +183,11 @@ const TaskDetailsPage = () => {
     setIsUpdating(false);
   };
 
+  const handleTaskDetailsUpdated = () => {
+    fetchTaskDetailsAndEditors(); // Re-fetch task details after update
+    setIsEditDialogOpen(false); // Close the dialog
+  };
+
   if (isLoading || isSessionLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
@@ -192,7 +216,7 @@ const TaskDetailsPage = () => {
           <CardContent>
             <p className="text-gray-700 dark:text-gray-300">The task you are looking for does not exist or you do not have access.</p>
             <Button asChild className="mt-4">
-              <Link to="/manager">Back to Tasks</Link>
+              <Link to={profile?.role === 'editor' ? '/editor' : '/manager'}>Back to Tasks</Link>
             </Button>
           </CardContent>
         </Card>
@@ -200,8 +224,11 @@ const TaskDetailsPage = () => {
     );
   }
 
-  const isTaskEditable = canEditTask(task);
-  const isTaskReassignable = canReassignTask();
+  const initialTaskFormValues = {
+    title: task.title,
+    project_id: task.project_id || '',
+    assigned_to: task.assigned_to || '',
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
@@ -216,7 +243,32 @@ const TaskDetailsPage = () => {
             <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white text-center flex-grow">
               {task.title}
             </CardTitle>
-            <div className="w-32"></div> {/* Spacer to balance the back button */}
+            <div className="flex items-center gap-2">
+              {canEditTaskDetails(task) && (
+                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit Task</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Edit Task</DialogTitle>
+                      <DialogDescription>
+                        Make changes to the task details here. Click save when you're done.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <EditTaskForm
+                      taskId={task.id}
+                      initialData={initialTaskFormValues}
+                      onTaskUpdated={handleTaskDetailsUpdated}
+                      onClose={() => setIsEditDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
           <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
             Project: {task.projects?.title || 'N/A'}
@@ -229,7 +281,7 @@ const TaskDetailsPage = () => {
               <Select
                 value={task.status}
                 onValueChange={handleStatusChange}
-                disabled={!isTaskEditable || isUpdating}
+                disabled={!canEditTaskStatus(task) || isUpdating}
               >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select status" />
@@ -251,7 +303,7 @@ const TaskDetailsPage = () => {
               <Select
                 value={task.assigned_to || ''}
                 onValueChange={handleAssignmentChange}
-                disabled={!isTaskReassignable || isUpdating}
+                disabled={!canReassignTask() || isUpdating}
               >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Select editor" />
