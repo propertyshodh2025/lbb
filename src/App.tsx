@@ -10,26 +10,29 @@ import AppRoutes from "./components/AppRoutes"; // Import the new AppRoutes comp
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SessionContextProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex flex-col flex-grow">
-              <AppHeader />
-              <main className="flex-grow">
-                <AppRoutes /> {/* Use the new AppRoutes component here */}
-              </main>
+const App = () => {
+  console.log("App component rendered");
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <SessionContextProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex flex-col flex-grow">
+                <AppHeader />
+                <main className="flex-grow">
+                  <AppRoutes />
+                </main>
+              </div>
             </div>
-          </div>
-        </SessionContextProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+          </SessionContextProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import Login from '@/pages/Login';
 import NotFound from '@/pages/NotFound';
@@ -16,27 +16,38 @@ import TaskDetailsPage from '@/pages/TaskDetailsPage';
 import UserManagementPage from '@/pages/UserManagementPage';
 import TasksPage from '@/pages/TasksPage';
 import ProjectsPage from '@/pages/ProjectsPage';
-import CompleteProfilePage from '@/pages/CompleteProfilePage'; // Import the new CompleteProfilePage
+import CompleteProfilePage from '@/pages/CompleteProfilePage';
+
+// Define routes with their allowed roles
+const routesConfig = [
+  { path: "/", element: <RoleBasedRedirect />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
+  { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
+  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] }, // Accessible to all authenticated users
+  { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] },
+  { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] },
+  { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] },
+  { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
+  { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
+  { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },
+  { path: "/users", element: <UserManagementPage />, allowedRoles: ['admin'] },
+  { path: "/tasks", element: <TasksPage />, allowedRoles: ['admin', 'manager', 'editor'] },
+  { path: "/projects", element: <ProjectsPage />, allowedRoles: ['admin', 'manager'] },
+];
 
 const AppRoutes = () => {
+  const location = useLocation();
+  console.log("AppRoutes rendered, current path:", location.pathname);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<RoleBasedRedirect />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/complete-profile" element={<CompleteProfilePage />} /> {/* New route for CompleteProfilePage */}
-        <Route path="/projects/:id" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ProjectDetailsPage /></ProtectedRoute>} />
-        <Route path="/tasks/:id" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><TaskDetailsPage /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/manager" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ManagerDashboard /></ProtectedRoute>} />
-        <Route path="/editor" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><EditorDashboard /></ProtectedRoute>} />
-        <Route path="/client" element={<ProtectedRoute allowedRoles={['client', 'admin']}><ClientDashboard /></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute allowedRoles={['admin']}><UserManagementPage /></ProtectedRoute>} />
-        <Route path="/tasks" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor']}><TasksPage /></ProtectedRoute>} />
-        <Route path="/projects" element={<ProtectedRoute allowedRoles={['admin', 'manager']}><ProjectsPage /></ProtectedRoute>} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-      </Route>
+      {routesConfig.map((route, index) => (
+        <Route
+          key={index}
+          path={route.path}
+          element={<ProtectedRoute allowedRoles={route.allowedRoles}>{route.element}</ProtectedRoute>}
+        />
+      ))}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

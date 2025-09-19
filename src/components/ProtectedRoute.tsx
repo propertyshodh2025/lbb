@@ -1,15 +1,19 @@
 "use client";
 
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useSession } from './SessionContextProvider';
 
 interface ProtectedRouteProps {
   allowedRoles?: string[];
+  children: React.ReactNode; // Now always expects children
 }
 
-const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   const { session, profile, isLoading } = useSession();
+  const location = useLocation();
+
+  console.log("ProtectedRoute - Path:", location.pathname, "isLoading:", isLoading, "session:", !!session, "profile:", !!profile, "profile role:", profile?.role, "allowedRoles:", allowedRoles);
 
   if (isLoading) {
     return (
@@ -20,17 +24,17 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />;
+    console.log("ProtectedRoute: No session, navigating to /login.");
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
-  // If session exists but profile is null, redirect to complete profile page
-  // This handles cases where a user is logged in but their profile entry is missing
   if (!profile) {
-    return <Navigate to="/complete-profile" replace />;
+    console.log("ProtectedRoute: Profile is null, navigating to /complete-profile.");
+    return <Navigate to="/complete-profile" replace state={{ from: location }} />;
   }
 
   if (allowedRoles && !allowedRoles.includes(profile.role)) {
-    // User is logged in but doesn't have the required role
+    console.log("ProtectedRoute: Access Denied for role", profile.role, "on path", location.pathname);
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-center">
@@ -42,7 +46,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     );
   }
 
-  return <Outlet />;
+  return <>{children}</>; // Render children directly
 };
 
 export default ProtectedRoute;
