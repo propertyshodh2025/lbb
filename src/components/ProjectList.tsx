@@ -2,13 +2,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { showError, showSuccess } from '@/utils/toast';
+import { Card, CardContent, CardHeader, CardTitle } = '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { useSession } from '@/components/SessionContextProvider'; // Import useSession
 import UpdateProjectStatusForm from './UpdateProjectStatusForm'; // Import the new component
 import { Link } from 'react-router-dom'; // Import Link
+import { Button } from '@/components/ui/button'; // Import Button
+import { Trash2 } from 'lucide-react'; // Import Trash2 icon
+import { // Import AlertDialog components
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Project {
   id: string;
@@ -73,6 +86,24 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
     fetchProjects();
   }, [refreshTrigger, filterByClientId]); // Re-fetch when refreshTrigger or filterByClientId changes
 
+  const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';
+  const canDeleteProject = profile?.role === 'admin'; // Only admins can delete projects
+
+  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', projectId);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      showError(`Failed to delete project "${projectTitle}".`);
+    } else {
+      showSuccess(`Project "${projectTitle}" deleted successfully!`);
+      onProjectUpdated?.(); // Notify parent to refresh the list
+    }
+  };
+
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
@@ -89,26 +120,46 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
     );
   }
 
-  const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';
-
   return (
     <div className="space-y-4">
       {projects.map((project) => (
         <Card key={project.id} className="shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">
               <Link to={`/projects/${project.id}`} className="hover:underline text-primary dark:text-primary-foreground">
                 {project.title}
               </Link>
             </CardTitle>
+            {canDeleteProject && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon" className="h-8 w-8">
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete Project</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the project
+                      "{project.title}" and all associated tasks and status history.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => handleDeleteProject(project.id, project.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-2">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Client: {project.profiles ? `${project.profiles.first_name} ${project.profiles.last_name}` : 'N/A'}
             </p>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {project.description && (
-              <p className="text-gray-700 dark:text-gray-300">{project.description}</p>
-            )}
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Current Status: <span className="font-medium capitalize">{project.current_status}</span>
             </p>
