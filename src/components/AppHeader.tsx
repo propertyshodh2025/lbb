@@ -3,11 +3,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
-import LogoutButton from '@/components/LogoutButton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import UserNav from './UserNav'; // Import UserNav
 
 interface NavItem {
   to: string;
@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
-  { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] }, // New nav item
+  { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];
 
@@ -44,12 +44,13 @@ const AppHeader = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background md:hidden"> {/* Only show header on mobile */}
+    <header className="sticky top-0 z-40 w-full border-b bg-background md:hidden">
       <div className="container flex h-16 items-center justify-between py-4">
         <Link to="/" className="text-lg font-bold text-primary">
           ProjectFlow
         </Link>
-        <div className="md:hidden">
+        <div className="flex items-center gap-2"> {/* Added flex container for UserNav and SheetTrigger */}
+          {session && <UserNav />} {/* Use UserNav here */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">
@@ -65,7 +66,6 @@ const AppHeader = () => {
                     {item.label}
                   </NavLink>
                 ))}
-                {session && <LogoutButton />}
               </nav>
             </SheetContent>
           </Sheet>

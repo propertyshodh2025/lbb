@@ -6,7 +6,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import LogoutButton from './LogoutButton';
+import UserNav from './UserNav'; // Import UserNav
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface NavItem {
@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
-  { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] }, // New nav item
+  { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
 ];
 
@@ -76,7 +76,7 @@ const Sidebar = () => {
         ))}
       </nav>
       <div className="mt-auto pt-4 border-t border-sidebar-border flex flex-col items-center gap-2">
-        <LogoutButton />
+        {session && <UserNav isCollapsed={isCollapsed} />} {/* Use UserNav here */}
         <Collapsible
           open={!isCollapsed}
           onOpenChange={setIsCollapsed}
