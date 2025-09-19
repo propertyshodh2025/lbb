@@ -5,14 +5,20 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddProjectForm from '@/components/AddProjectForm';
-import ProjectList from '@/components/ProjectList'; // Import the new component
+import ProjectList from '@/components/ProjectList';
+import UserManagementList from '@/components/UserManagementList'; // Import the new component
 
 const AdminDashboard = () => {
   const { profile, isLoading } = useSession();
   const [projectRefreshTrigger, setProjectRefreshTrigger] = useState(false); // State to trigger project list refresh
+  const [userRefreshTrigger, setUserRefreshTrigger] = useState(false); // State to trigger user list refresh
 
   const handleProjectChange = () => {
     setProjectRefreshTrigger(!projectRefreshTrigger); // Toggle to trigger a re-fetch or re-render of project list
+  };
+
+  const handleUserChange = () => {
+    setUserRefreshTrigger(!userRefreshTrigger); // Toggle to trigger a re-fetch or re-render of user list
   };
 
   if (isLoading) {
@@ -56,7 +62,7 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Welcome, Admin! Use the form below to add new projects.
+            Welcome, Admin! Use the sections below to manage your application.
           </p>
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add New Project</h3>
@@ -65,6 +71,10 @@ const AdminDashboard = () => {
           <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
             <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">All Projects</h3>
             <ProjectList refreshTrigger={projectRefreshTrigger} onProjectUpdated={handleProjectChange} />
+          </div>
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">User Management</h3>
+            <UserManagementList refreshTrigger={userRefreshTrigger} />
           </div>
         </CardContent>
       </Card>
