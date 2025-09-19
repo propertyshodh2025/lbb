@@ -19,16 +19,20 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<SessionContextType['profile']>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start loading
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleAuthStateChange = async (event: string, currentSession: Session | null) => {
       console.log("Auth state changed:", event, currentSession ? "Session exists" : "No session");
+      setIsLoading(true); // Set loading to true at the start of handling any auth state change
+
       if (currentSession) {
         setSession(currentSession);
         setUser(currentSession.user);
 
+        // Fetch profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('id, role, first_name, last_name, avatar_url')
@@ -43,80 +47,29 @@ export const SessionContextProvider = ({ children }: { children: React.ReactNode
           setProfile(profileData);
         }
 
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          if (window.location.pathname === '/login') {
-            navigate('/'); // Redirect to home if logged in and on login page
-          }
+        // Redirect logic for authenticated users
+        if (window.location.pathname === '/login') {
+          navigate('/');
         }
       } else {
+        // No session (SIGNED_OUT or INITIAL_SESSION with no session)
         setSession(null);
         setUser(null);
         setProfile(null);
-        if (window.location.pathname !== '/login') {
-          navigate('/login'); // Only redirect to login if no session and not already on login page
-        }
-      }
-      setIsLoading(false); // Ensure loading is false after any auth state change
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    // Initial session check
-    const checkInitialSession = async () => {
-      try {
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error("Error getting initial session:", sessionError);
-          showError("Failed to retrieve initial session.");
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          if (window.location.pathname !== '/login') {
-            navigate('/login');
-          }
-        } else if (initialSession) {
-          setSession(initialSession);
-          setUser(initialSession.user);
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, role, first_name, last_name, avatar_url')
-            .eq('id', initialSession.user.id)
-            .single();
-
-          if (profileError) {
-            console.error("Error fetching initial profile:", profileError);
-            showError("Failed to load user profile.");
-            setProfile(null); // Profile is null if there's an error
-          } else {
-            setProfile(profileData);
-          }
-          if (window.location.pathname === '/login') {
-            navigate('/');
-          }
-        } else {
-          // No initial session, redirect to login if not already there
-          if (window.location.pathname !== '/login') {
-            navigate('/login');
-          }
-        }
-      } catch (error) {
-        console.error("Unexpected error during initial session check:", error);
-        showError("An unexpected error occurred during authentication.");
-        setSession(null);
-        setUser(null);
-        setProfile(null);
+        // Redirect logic for unauthenticated users
         if (window.location.pathname !== '/login') {
           navigate('/login');
         }
-      } finally {
-        setIsLoading(false); // ALWAYS set loading to false after initial check
       }
+      setIsLoading(false); // Always set loading to false after processing the state change
     };
 
-    checkInitialSession();
+    // Set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
+    // Clean up the subscription on component unmount
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate]); // Depend on navigate to ensure it's stable
 
   return (
     <SessionContext.Provider value={{ session, user, profile, isLoading }}>
