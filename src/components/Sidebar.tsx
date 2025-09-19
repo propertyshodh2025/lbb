@@ -17,12 +17,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/', label: 'Dashboard', icon: Home, roles: ['admin', 'manager', 'editor', 'client'] },
+  { to: '/', label: 'Dashboard', icon: Home, roles: ['admin', 'manager', 'editor'] }, // Removed 'client' role
   { to: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['admin'] },
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
-  { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] }, // New navigation item for ProjectsPage
+  { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] },
   { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] },
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
   { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
