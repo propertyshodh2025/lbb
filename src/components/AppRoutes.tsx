@@ -25,6 +25,7 @@ import FinanceDepartmentPage from '@/pages/FinanceDepartmentPage'; // New Financ
 import LegalDepartmentPage from '@/pages/LegalDepartmentPage'; // New Legal Department Page
 import SalesDepartmentPage from '@/pages/SalesDepartmentPage'; // New Sales Department Page
 import MarketingDepartmentPage from '@/pages/MarketingDepartmentPage'; // New Marketing Department Page
+import ResearchDepartmentPage from '@/pages/ResearchDepartmentPage'; // New Research & Development Department Page
 import { useSession } from '@/components/SessionContextProvider';
 
 // Define routes with their allowed roles
@@ -41,6 +42,7 @@ const routesConfig = [
   { path: "/admin/departments/legal", element: <LegalDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Legal Department Page
   { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Sales Department Page
   { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Marketing Department Page
+  { path: "/admin/departments/research", element: <ResearchDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Research & Development Department Page
   { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
   { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },

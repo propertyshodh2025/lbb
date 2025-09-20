@@ -5,7 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import DepartmentCard from '@/components/DepartmentCard';
-import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2 } from 'lucide-react'; // Added new icons
+import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2, FlaskConical } from 'lucide-react'; // Added FlaskConical icon
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -104,6 +104,12 @@ const AdminDashboard = () => {
               description="Plan campaigns, analyze market trends, and manage brand presence."
               icon={Megaphone}
               to="/admin/departments/marketing"
+            />
+            <DepartmentCard
+              title="Research & Development"
+              description="Innovate and explore new technologies and creative solutions."
+              icon={FlaskConical}
+              to="/admin/departments/research"
             />
           </div>
         </CardContent>
