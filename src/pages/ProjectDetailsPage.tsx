@@ -63,14 +63,13 @@ const ProjectDetailsPage = () => {
   const canManageProjects = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager');
   const canDeleteProject = !isSessionLoading && profile?.role === 'admin';
 
-  useEffect(() => {
-    const fetchProjectDetails = async () => {
-      if (!id) return;
+  const fetchProjectDetails = async () => {
+    if (!id) return;
 
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('projects')
-        .select(`
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
           id,
           title,
           description,
@@ -81,21 +80,43 @@ const ProjectDetailsPage = () => {
           created_at,
           profiles (first_name, last_name)
         `)
-        .eq('id', id)
-        .single();
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        console.error('Error fetching project details:', error);
-        showError('Failed to load project details.');
-        setProject(null);
-      } else {
-        setProject(data);
-      }
-      setIsLoading(false);
-    };
+    if (error) {
+      console.error('Error fetching project details:', error);
+      showError('Failed to load project details.');
+      setProject(null);
+    } else {
+      setProject(data);
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchProjectDetails();
-  }, [id, projectRefreshTrigger]);
+
+    const projectSubscription = supabase
+      .channel(`project_details:${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `id=eq.${id}` }, payload => {
+        console.log('Project details change received!', payload);
+        fetchProjectDetails(); // Re-fetch project details on any change
+      })
+      .subscribe();
+
+    const taskSubscription = supabase
+      .channel(`project_tasks_for_details:${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `project_id=eq.${id}` }, payload => {
+        console.log('Task change for project details received!', payload);
+        setTaskRefreshTrigger(prev => !prev); // Trigger task list refresh
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(projectSubscription);
+      supabase.removeChannel(taskSubscription);
+    };
+  }, [id, projectRefreshTrigger, isEditDialogOpen]);
 
   const handleTaskAdded = () => {
     setTaskRefreshTrigger(!taskRefreshTrigger);
@@ -123,7 +144,7 @@ const ProjectDetailsPage = () => {
       showError('Failed to delete project.');
     } else {
       showSuccess('Project deleted successfully!');
-      navigate('/admin');
+      navigate('/manager');
     }
   };
 

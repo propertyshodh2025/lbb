@@ -158,6 +158,18 @@ const TaskDetailsPage = () => {
 
   useEffect(() => {
     fetchTaskDetailsAndEditors();
+
+    const subscription = supabase
+      .channel(`task_details:${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${id}` }, payload => {
+        console.log('Task details change received!', payload);
+        fetchTaskDetailsAndEditors(); // Re-fetch task details on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [id, isEditDialogOpen]);
 
   const handleStatusChange = async (newStatus: string) => {

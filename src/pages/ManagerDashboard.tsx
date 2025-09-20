@@ -91,6 +91,30 @@ const ManagerDashboard = () => {
   useEffect(() => {
     if (!isSessionLoading && (profile?.role === 'manager' || profile?.role === 'admin')) {
       fetchTasksAndEditors();
+
+      const tasksSubscription = supabase
+        .channel('public:tasks')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
+          console.log('Task change received in ManagerDashboard!', payload);
+          fetchTasksAndEditors(); // Re-fetch tasks on any change
+        })
+        .subscribe();
+
+      const profilesSubscription = supabase
+        .channel('public:profiles')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
+          console.log('Profile change received in ManagerDashboard!', payload);
+          // Only re-fetch editors if a profile with role 'editor' changed
+          if (payload.new?.role === 'editor' || payload.old?.role === 'editor') {
+            fetchTasksAndEditors();
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(tasksSubscription);
+        supabase.removeChannel(profilesSubscription);
+      };
     }
   }, [isSessionLoading, profile]);
 

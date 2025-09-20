@@ -5,7 +5,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSession } from '@/components/SessionContextProvider';
 import {
   Select,
   SelectContent,
@@ -116,13 +115,12 @@ const TaskList = ({
     return profile.role === 'admin' || profile.role === 'manager';
   };
 
-  useEffect(() => {
-    const fetchTasksAndEditors = async () => {
-      setIsLoading(true);
+  const fetchTasksAndEditors = async () => {
+    setIsLoading(true);
 
-      let query = supabase
-        .from('tasks')
-        .select(`
+    let query = supabase
+      .from('tasks')
+      .select(`
           id,
           title,
           status,
@@ -134,48 +132,61 @@ const TaskList = ({
           profiles (id, first_name, last_name, role)
         `);
 
-      if (filterByAssignedTo) {
-        if (filterByAssignedTo === 'unassigned') {
-          query = query.is('assigned_to', null);
-        } else {
-          query = query.eq('assigned_to', filterByAssignedTo);
-        }
-      }
-      if (filterByProjectId) {
-        query = query.eq('project_id', filterByProjectId);
-      }
-      if (filterByStatus) {
-        query = query.eq('status', filterByStatus);
-      }
-
-      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-
-      const { data: tasksData, error: tasksError } = await query;
-
-      if (tasksError) {
-        console.error('Error fetching tasks:', tasksError);
-        showError('Failed to load tasks.');
-        setTasks([]);
+    if (filterByAssignedTo) {
+      if (filterByAssignedTo === 'unassigned') {
+        query = query.is('assigned_to', null);
       } else {
-        setTasks(tasksData || []);
+        query = query.eq('assigned_to', filterByAssignedTo);
       }
+    }
+    if (filterByProjectId) {
+      query = query.eq('project_id', filterByProjectId);
+    }
+    if (filterByStatus) {
+      query = query.eq('status', filterByStatus);
+    }
 
-      const { data: editorsData, error: editorsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('role', 'editor');
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-      if (editorsError) {
-        console.error('Error fetching editors:', editorsError);
-        showError('Failed to load editors for assignment.');
-      } else {
-        setEditors(editorsData || []);
-      }
+    const { data: tasksData, error: tasksError } = await query;
 
-      setIsLoading(false);
-    };
+    if (tasksError) {
+      console.error('Error fetching tasks:', tasksError);
+      showError('Failed to load tasks.');
+      setTasks([]);
+    } else {
+      setTasks(tasksData || []);
+    }
 
+    const { data: editorsData, error: editorsError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name')
+      .eq('role', 'editor');
+
+    if (editorsError) {
+      console.error('Error fetching editors:', editorsError);
+      showError('Failed to load editors for assignment.');
+    } else {
+      setEditors(editorsData || []);
+    }
+
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchTasksAndEditors();
+
+    const subscription = supabase
+      .channel('public:tasks')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
+        console.log('Task change received!', payload);
+        fetchTasksAndEditors(); // Re-fetch tasks on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [
     refreshTrigger,
     filterByAssignedTo,
@@ -227,6 +238,8 @@ const TaskList = ({
 
     const assignedToUuid = newAssignedTo === '' ? null : newAssignedTo;
     const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received'; // Update status based on assignment
+
+    if (assignedToUuid === task.assigned_to && newStatus === task.status) return;
 
     const { error } = await supabase
       .from('tasks')

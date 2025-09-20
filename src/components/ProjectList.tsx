@@ -60,12 +60,11 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
   const [currentProjectToEdit, setCurrentProjectToEdit] = useState<Project | null>(null); // State to hold project being edited
   const { profile, isLoading: isSessionLoading } = useSession(); // Get session and profile
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setIsLoading(true);
-      let query = supabase
-        .from('projects')
-        .select(`
+  const fetchProjects = async () => {
+    setIsLoading(true);
+    let query = supabase
+      .from('projects')
+      .select(`
           id,
           title,
           description,
@@ -76,25 +75,38 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
           created_at,
           profiles (first_name, last_name)
         `)
-        .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
-      if (filterByClientId) {
-        query = query.eq('client_id', filterByClientId);
-      }
+    if (filterByClientId) {
+      query = query.eq('client_id', filterByClientId);
+    }
 
-      const { data, error } = await query;
+    const { data, error } = await query;
 
-      if (error) {
-        console.error('Error fetching projects:', error);
-        showError('Failed to load projects.');
-        setProjects([]);
-      } else {
-        setProjects(data || []);
-      }
-      setIsLoading(false);
-    };
+    if (error) {
+      console.error('Error fetching projects:', error);
+      showError('Failed to load projects.');
+      setProjects([]);
+    } else {
+      setProjects(data || []);
+    }
+    setIsLoading(false);
+  };
 
+  useEffect(() => {
     fetchProjects();
+
+    const subscription = supabase
+      .channel('public:projects')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => {
+        console.log('Project change received!', payload);
+        fetchProjects(); // Re-fetch projects on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [refreshTrigger, filterByClientId, isEditDialogOpen]); // Re-fetch when refreshTrigger, filterByClientId, or dialog closes changes
 
   const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';

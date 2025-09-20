@@ -60,6 +60,18 @@ const EditorDashboard = () => {
   useEffect(() => {
     if (!isSessionLoading && user?.id && (profile?.role === 'editor' || profile?.role === 'admin' || profile?.role === 'manager')) {
       fetchEditorTasks();
+
+      const subscription = supabase
+        .channel(`editor_tasks:${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `assigned_to=eq.${user.id}` }, payload => {
+          console.log('Editor task change received!', payload);
+          fetchEditorTasks(); // Re-fetch tasks on any change relevant to this editor
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
     }
   }, [isSessionLoading, user, profile]);
 

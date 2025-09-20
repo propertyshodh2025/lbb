@@ -69,6 +69,30 @@ const ClientDashboard = () => {
     };
 
     fetchClientTasks();
+
+    // Subscribe to changes in tasks and projects relevant to the client
+    const tasksSubscription = supabase
+      .channel(`client_tasks:${user?.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
+        console.log('Client task change received!', payload);
+        // Re-fetch tasks if the change is relevant to this client's projects
+        // This is a broad re-fetch, can be optimized with more specific filters if needed
+        fetchClientTasks();
+      })
+      .subscribe();
+
+    const projectsSubscription = supabase
+      .channel(`client_projects:${user?.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `client_id=eq.${user?.id}` }, payload => {
+        console.log('Client project change received!', payload);
+        fetchClientTasks(); // Re-fetch tasks if projects change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(tasksSubscription);
+      supabase.removeChannel(projectsSubscription);
+    };
   }, [user, profile, isSessionLoading]);
 
   if (isSessionLoading || isTasksLoading) {
