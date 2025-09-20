@@ -6,14 +6,24 @@ import UserManagementList from '@/components/UserManagementList';
 import AddUserForm from '@/components/AddUserForm';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const ClientManagementPage = () => {
   const [userListRefreshTrigger, setUserListRefreshTrigger] = useState(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
 
   const handleUserAdded = () => {
     setUserListRefreshTrigger(!userListRefreshTrigger);
+    setIsAddClientDialogOpen(false); // Close dialog after adding user
   };
 
   return (
@@ -37,9 +47,23 @@ const ClientManagementPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
-              <h3 className="text-xl font-semibold mb-4 text-white/90">Add New Client</h3>
-              <AddUserForm onUserAdded={handleUserAdded} defaultRole="client" hideRoleSelection={true} />
+            <div className="flex justify-end mb-4">
+              <Dialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
+                  <DialogHeader>
+                    <DialogTitle className="text-white/90">Add New Client</DialogTitle>
+                    <DialogDescription className="text-white/70">
+                      Fill in the details to create a new client profile.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AddUserForm onUserAdded={handleUserAdded} defaultRole="client" hideRoleSelection={true} />
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
               <h3 className="text-xl font-semibold mb-4 text-white/90">Existing Clients</h3>
