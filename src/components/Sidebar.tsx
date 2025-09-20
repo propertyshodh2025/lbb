@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState } => 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
@@ -55,7 +55,7 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r border-neutral-800 bg-neutral-900 text-white/90 transition-all duration-300 ease-in-out h-screen", // Added h-screen here
+        "hidden md:flex flex-col border-r border-neutral-800 bg-neutral-900 text-white/90 transition-all duration-300 ease-in-out h-screen",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
@@ -69,7 +69,7 @@ const Sidebar = () => {
           </Link>
         )}
       </div>
-      <nav className="flex-1 py-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 py-4 space-y-2 overflow-y-auto scrollbar-hide">
         {filteredNavItems.map((item) => (
           <Button
             key={item.to}
