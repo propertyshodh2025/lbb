@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EDITOR
+  CLIENT
+  MEDIA_CLIENT // New role for clients under the media department
+}
+
+model User {
+  id        String   @id @default(uuid()) @map("id")
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  projects  Project[] @relation("ClientProjects")
+  tasks     Task[]    @relation("CreatedTasks")
+  assignedTasks Task[] @relation("AssignedTasks")
+  taskStatusHistory TaskStatusHistory[] @relation("TaskStatusUpdates")
+
+  @@map("users")
+}
+
+model Project {
+  id             String    @id @default(uuid())
+  clientId       String    @map("client_id")
+  title          String
+  description    String?
+  dueDate        DateTime? @map("due_date")
+  notes          String?
+  currentStatus  String    @default("Raw files received") @map("current_status")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  client         User      @relation("ClientProjects", fields: [clientId], references: [id])
+  tasks          Task[]
+  statusHistory  ProjectStatusHistory[]
+
+  @@map("projects")
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  projectId     String    @map("project_id")
+  assignedToId  String?   @map("assigned_to")
+  createdById   String    @map("created_by")
+  title         String
+  description   String?
+  status        String    @default("Unassigned")
+  dueDate       DateTime? @map("due_date")
+  notes         String?
+  priority      String?   @default("Medium")
+  attachments   Json      @default("[]") // Store attachment URLs as JSON array
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo    User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  createdBy     User      @relation("CreatedTasks", fields: [createdById], references: [id])
+  statusHistory TaskStatusHistory[]
+
+  @@map("tasks")
+}
+
+model TaskStatusHistory {
+  id        String   @id @default(uuid())
+  taskId    String   @map("task_id")
+  status    String
+  notes     String?
+  updatedBy String?  @map("updated_by")
+  timestamp DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  updater   User?    @relation("TaskStatusUpdates", fields: [updatedBy], references: [id])
+
+  @@map("task_status_history")
+}
+
+model ProjectStatusHistory {
+  id        String    @id @default(uuid())
+  projectId String    @map("project_id")
+  status    String
+  timestamp DateTime? @default(now())
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_status_history")
+}

@@ -27,6 +27,15 @@ serve(async (req) => {
       });
     }
 
+    // Validate role against allowed roles
+    const allowedRoles = ['admin', 'manager', 'editor', 'client', 'media_client'];
+    if (!allowedRoles.includes(role)) {
+      return new Response(JSON.stringify({ error: `Invalid role provided: ${role}` }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
     // Create the user in Supabase Auth
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
