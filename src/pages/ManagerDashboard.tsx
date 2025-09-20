@@ -129,14 +129,14 @@ const ManagerDashboard = () => {
       title: 'Unassigned Tasks',
       statusMap: ['Raw files received', 'Unassigned'],
       assignedToId: null, // Explicitly null for unassigned
-      color: 'bg-gray-50 dark:bg-gray-950',
+      color: 'bg-red-50 dark:bg-red-950', // Highlighted color for unassigned tasks
     },
     ...editors.map(editor => ({
       id: editor.id, // Use editor ID as column ID
       title: `${editor.first_name} ${editor.last_name}`,
       statusMap: ['Assigned', 'In Progress', 'Under Review', 'Completed'], // All statuses for an assigned task
       assignedToId: editor.id,
-      color: 'bg-yellow-50 dark:bg-yellow-950', // Example color
+      color: 'bg-yellow-50 dark:bg-yellow-950', // Example color for editor columns
     })),
   ];
 
