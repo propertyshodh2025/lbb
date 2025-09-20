@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon } from 'lucide-react'; // Import Sun and Moon icons
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon, Building2 } from 'lucide-react'; // Import Building2 icon
 import { cn } from '@/lib/utils';
 import UserNav from './UserNav';
-import { useTheme } from '@/contexts/ThemeContext'; // Import useTheme
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface NavItem {
   to: string;
@@ -19,7 +19,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: Home, roles: ['admin', 'manager', 'editor'] }, // Removed 'client' role
-  { to: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { to: '/admin', label: 'Departments', icon: Building2, roles: ['admin'] }, // New Admin Dashboard (Office View)
+  { to: '/admin/overview', label: 'Admin Overview', icon: LayoutDashboard, roles: ['admin'] }, // Old Admin Dashboard content
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
@@ -37,7 +38,7 @@ const NavLink = ({ to, children, className, onClick }: { to: string; children: R
 
 const AppHeader = () => {
   const { profile, isLoading, session } = useSession();
-  const { theme, toggleTheme } = useTheme(); // Use theme context
+  const { theme, toggleTheme } = useTheme();
 
   if (isLoading || !session) {
     return null;

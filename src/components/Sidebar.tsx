@@ -5,7 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks, Briefcase } from 'lucide-react'; // Import Briefcase icon for Projects
+import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks, Briefcase, Building2 } from 'lucide-react'; // Import Building2 for departments
 import UserNav from './UserNav';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
@@ -18,7 +18,8 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: Home, roles: ['admin', 'manager', 'editor'] }, // Removed 'client' role
-  { to: '/admin', label: 'Admin Dashboard', icon: LayoutDashboard, roles: ['admin'] },
+  { to: '/admin', label: 'Departments', icon: Building2, roles: ['admin'] }, // New Admin Dashboard (Office View)
+  { to: '/admin/overview', label: 'Admin Overview', icon: LayoutDashboard, roles: ['admin'] }, // Old Admin Dashboard content
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },

@@ -7,7 +7,8 @@ import Login from '@/pages/Login';
 import NotFound from '@/pages/NotFound';
 import RoleBasedRedirect from '@/pages/RoleBasedRedirect';
 import ProfilePage from '@/pages/ProfilePage';
-import AdminDashboard from '@/pages/AdminDashboard';
+import AdminDashboard from '@/pages/AdminDashboard'; // New Admin Dashboard (Office View)
+import AdminOverviewPage from '@/pages/AdminOverviewPage'; // Old Admin Dashboard content
 import ManagerDashboard from '@/pages/ManagerDashboard';
 import EditorDashboard from '@/pages/EditorDashboard';
 import ClientDashboard from '@/pages/ClientDashboard';
@@ -17,8 +18,8 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import TasksPage from '@/pages/TasksPage';
 import ProjectsPage from '@/pages/ProjectsPage';
 import CompleteProfilePage from '@/pages/CompleteProfilePage';
-import DevHomePage from '@/pages/DevHomePage'; // Import DevHomePage
-import { useSession } from './SessionContextProvider'; // Import useSession
+import DevHomePage from '@/pages/DevHomePage';
+import MediaDepartmentPage from '@/pages/MediaDepartmentPage'; // New Media Department Page
 
 // Define routes with their allowed roles
 const routesConfig = [
@@ -26,7 +27,9 @@ const routesConfig = [
   { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
   { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] },
   { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] },
-  { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] },
+  { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] }, // New Admin Dashboard (Office View)
+  { path: "/admin/overview", element: <AdminOverviewPage />, allowedRoles: ['admin'] }, // Old Admin Dashboard content
+  { path: "/admin/departments/media", element: <MediaDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Media Department Page
   { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
   { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },
@@ -41,10 +44,9 @@ interface AppRoutesProps {
 
 const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
   const location = useLocation();
-  const { session, isLoading, profile } = useSession(); // Get session and loading state from context
+  const { session, isLoading, profile } = useSession();
   console.log("AppRoutes rendered, current path:", location.pathname);
 
-  // Determine if we should show the DevHomePage
   const showDevHomePage = !isLoading && !session && location.pathname === '/';
 
   return (
