@@ -5,10 +5,10 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddTaskForm from '@/components/AddTaskForm';
-import KanbanBoard from '@/components/KanbanBoard'; // Import KanbanBoard
+import KanbanBoard from '@/components/KanbanBoard';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { Briefcase, ListChecks, PlusCircle, Users } from 'lucide-react';
+import { Briefcase, ListChecks, PlusCircle, Users, Package, Clock, CheckCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ interface Editor {
 }
 
 const ManagerDashboard = () => {
-  const { profile, isLoading: isSessionLoading } = useSession();
+  const { profile, isLoading: isSessionLoading, user } = useSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
   const [isTasksLoading, setIsTasksLoading] = useState(true);
@@ -125,26 +125,26 @@ const ManagerDashboard = () => {
 
   const kanbanColumns = [
     {
-      id: 'raw-files-unassigned',
-      title: 'Raw Files / Unassigned',
+      id: 'unassigned-tasks',
+      title: 'Unassigned Tasks',
       statusMap: ['Raw files received', 'Unassigned'],
-      assignedToId: null,
-      color: 'bg-blue-50 dark:bg-blue-950',
+      assignedToId: null, // Explicitly null for unassigned
+      color: 'bg-gray-50 dark:bg-gray-950',
     },
     ...editors.map(editor => ({
-      id: editor.id,
+      id: editor.id, // Use editor ID as column ID
       title: `${editor.first_name} ${editor.last_name}`,
-      statusMap: ['Assigned', 'In Progress', 'Under Review'], // Editors can have tasks in these statuses
+      statusMap: ['Assigned', 'In Progress', 'Under Review', 'Completed'], // All statuses for an assigned task
       assignedToId: editor.id,
-      color: 'bg-yellow-50 dark:bg-yellow-950',
+      color: 'bg-yellow-50 dark:bg-yellow-950', // Example color
     })),
-    {
-      id: 'completed',
-      title: 'Completed',
-      statusMap: ['Completed'],
-      color: 'bg-green-50 dark:bg-green-950',
-    },
   ];
+
+  const totalTasks = tasks.length;
+  const unassignedTasksCount = tasks.filter(t => t.status === 'Raw files received' || t.status === 'Unassigned').length;
+  const activeTasksCount = tasks.filter(t => ['Assigned', 'In Progress', 'Under Review'].includes(t.status)).length;
+  const completedTasksCount = tasks.filter(t => t.status === 'Completed').length;
+  const editorsActiveCount = editors.length;
 
   if (isSessionLoading || isTasksLoading) {
     return (
@@ -192,8 +192,59 @@ const ManagerDashboard = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Welcome, Manager! Here you can manage projects and tasks.
+            Welcome, {profile?.first_name || 'Manager'}! Here you can manage projects and tasks.
           </p>
+
+          {/* Summary Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="dark:bg-gray-900">
+              <CardContent className="p-6 flex items-center">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalTasks}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="dark:bg-gray-900">
+              <CardContent className="p-6 flex items-center">
+                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
+                  <Clock className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unassigned Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{unassignedTasksCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="dark:bg-gray-900">
+              <CardContent className="p-6 flex items-center">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <ListChecks className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeTasksCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="dark:bg-gray-900">
+              <CardContent className="p-6 flex items-center">
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedTasksCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="flex justify-end mb-4 gap-2">
             <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
