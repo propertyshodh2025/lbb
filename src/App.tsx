@@ -7,26 +7,29 @@ import { SessionContextProvider } from "./components/SessionContextProvider";
 import AppHeader from "./components/AppHeader";
 import Sidebar from "./components/Sidebar";
 import AppRoutes from "./components/AppRoutes";
-import { ThemeProvider } from "./contexts/ThemeContext"; // Import ThemeProvider
+import { ThemeProvider } from "./contexts/ThemeContext";
+import React, { useState } from 'react'; // Import useState
 
 const queryClient = new QueryClient();
 
 const App = () => {
   console.log("App component rendered");
+  const [devRole, setDevRole] = useState<'admin' | 'manager' | 'editor' | 'client' | null>(null);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider> {/* Wrap with ThemeProvider */}
+      <ThemeProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <SessionContextProvider>
+            <SessionContextProvider devRole={devRole}> {/* Pass devRole to context provider */}
               <div className="flex min-h-screen">
                 <Sidebar />
                 <div className="flex flex-col flex-grow">
                   <AppHeader />
                   <main className="flex-grow">
-                    <AppRoutes />
+                    <AppRoutes onSelectDevRole={setDevRole} /> {/* Pass setDevRole to AppRoutes */}
                   </main>
                 </div>
               </div>

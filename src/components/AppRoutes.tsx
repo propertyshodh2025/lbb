@@ -17,12 +17,13 @@ import UserManagementPage from '@/pages/UserManagementPage';
 import TasksPage from '@/pages/TasksPage';
 import ProjectsPage from '@/pages/ProjectsPage';
 import CompleteProfilePage from '@/pages/CompleteProfilePage';
+import DevHomePage from '@/pages/DevHomePage'; // Import DevHomePage
+import { useSession } from './SessionContextProvider'; // Import useSession
 
 // Define routes with their allowed roles
 const routesConfig = [
-  { path: "/", element: <RoleBasedRedirect />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
   { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
-  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] }, // Accessible to all authenticated users
+  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
   { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] },
   { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] },
@@ -34,13 +35,26 @@ const routesConfig = [
   { path: "/projects", element: <ProjectsPage />, allowedRoles: ['admin', 'manager'] },
 ];
 
-const AppRoutes = () => {
+interface AppRoutesProps {
+  onSelectDevRole: (role: 'admin' | 'manager' | 'editor' | 'client') => void;
+}
+
+const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
   const location = useLocation();
+  const { session, isLoading, profile } = useSession(); // Get session and loading state from context
   console.log("AppRoutes rendered, current path:", location.pathname);
+
+  // Determine if we should show the DevHomePage
+  const showDevHomePage = !isLoading && !session && location.pathname === '/';
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      {showDevHomePage ? (
+        <Route path="/" element={<DevHomePage onSelectRole={onSelectDevRole} />} />
+      ) : (
+        <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor', 'client']}><RoleBasedRedirect /></ProtectedRoute>} />
+      )}
       {routesConfig.map((route, index) => (
         <Route
           key={index}
