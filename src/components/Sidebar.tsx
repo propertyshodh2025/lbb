@@ -21,7 +21,6 @@ const navItems: NavItem[] = [
   { to: '/admin', label: 'Departments', icon: Building2, roles: ['admin'] },
   { to: '/admin/overview', label: 'Admin Overview', icon: LayoutDashboard, roles: ['admin'] },
   { to: '/admin/departments/media', label: 'Media Production', icon: Briefcase, roles: ['admin', 'manager'] },
-  // Removed Sales Management Page from navItems
   { to: '/admin/departments/tech', label: 'Tech Department', icon: Code, roles: ['admin', 'manager'] },
   { to: '/admin/departments/finance', label: 'Finance Department', icon: DollarSign, roles: ['admin', 'manager'] },
   { to: '/admin/departments/legal', label: 'Legal Department', icon: Scale, roles: ['admin', 'manager'] },
@@ -30,10 +29,10 @@ const navItems: NavItem[] = [
   { to: '/admin/departments/research', label: 'R&D Department', icon: FlaskConical, roles: ['admin', 'manager'] },
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
-  { to: '/sales-manager-dashboard', label: 'Sales Manager Dashboard', icon: Handshake, roles: ['admin', 'sales_manager'] }, // New Sales Manager Dashboard
-  { to: '/warrior-dashboard', label: 'Warrior Dashboard', icon: Swords, roles: ['admin', 'warrior'] }, // New Warrior Dashboard
-  { to: '/deal-closer-dashboard', label: 'Deal Closer Dashboard', icon: Trophy, roles: ['admin', 'deal_closer'] }, // New Deal Closer Dashboard
-  { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] }, // Kept 'client' for existing data
+  { to: '/sales-manager-dashboard', label: 'Sales Manager Dashboard', icon: Handshake, roles: ['admin', 'sales_manager'] },
+  { to: '/warrior-dashboard', label: 'Warrior Dashboard', icon: Swords, roles: ['admin', 'warrior'] },
+  { to: '/deal-closer-dashboard', label: 'Deal Closer Dashboard', icon: Trophy, roles: ['admin', 'deal_closer'] },
+  { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
   { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] },
   { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] },
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
@@ -56,7 +55,7 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r border-neutral-800 bg-neutral-900 text-white/90 transition-all duration-300 ease-in-out",
+        "hidden md:flex flex-col border-r border-neutral-800 bg-neutral-900 text-white/90 transition-all duration-300 ease-in-out h-screen", // Added h-screen here
         isCollapsed ? "w-20" : "w-64"
       )}
     >
