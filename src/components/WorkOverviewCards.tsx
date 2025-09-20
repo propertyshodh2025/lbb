@@ -164,45 +164,6 @@ const WorkOverviewCards = () => {
           </CardContent>
         </Card>
       </Link>
-
-      <Link to="/users?role=sales_manager" className="block">
-        <Card className="h-full flex flex-col justify-between shadow-lg bg-neutral-900 rounded-2xl glass-border hover:border-lime-400 transition-colors duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold text-white/90">Sales Managers</CardTitle>
-            <Handshake className="h-8 w-8 text-lime-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white/90">{roleCounts.sales_manager}</p>
-            <p className="text-sm text-white/70">Total sales managers</p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      <Link to="/users?role=warrior" className="block">
-        <Card className="h-full flex flex-col justify-between shadow-lg bg-neutral-900 rounded-2xl glass-border hover:border-lime-400 transition-colors duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold text-white/90">Warriors</CardTitle>
-            <Swords className="h-8 w-8 text-lime-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white/90">{roleCounts.warrior}</p>
-            <p className="text-sm text-white/70">Total warriors</p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      <Link to="/users?role=deal_closer" className="block">
-        <Card className="h-full flex flex-col justify-between shadow-lg bg-neutral-900 rounded-2xl glass-border hover:border-lime-400 transition-colors duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold text-white/90">Deal Closers</CardTitle>
-            <Trophy className="h-8 w-8 text-lime-400" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-white/90">{roleCounts.deal_closer}</p>
-            <p className="text-sm text-white/70">Total deal closers</p>
-          </CardContent>
-        </Card>
-      </Link>
     </div>
   );
 };
