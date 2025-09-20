@@ -142,4 +142,6 @@
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+  z-index: -1; /* Ensure it's behind content */
+  pointer-events: none; /* Ensure it doesn't capture clicks */
 }

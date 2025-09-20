@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useSession } from '@/components/SessionContextProvider';
-import { Button } from '@/components/ui/button'; // Keep shadcn Button for filters/sort if they work
+import { Button } from '@/components/ui/button';
 import { Trash2, Edit, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react';
 import {
   AlertDialog,
@@ -195,13 +195,13 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
   };
 
   const handleEditClick = (user: UserProfile) => {
-    console.log('Native Edit button clicked for user:', user.id); // Log for debugging
+    console.log('Edit button clicked for user:', user.id); // Log for debugging
     setCurrentUserToEdit(user);
     setIsEditDialogOpen(true);
   };
 
   const handleDeleteClick = (user: UserProfile) => {
-    console.log('Native Delete button clicked for user:', user.id); // Log for debugging
+    console.log('Delete button clicked for user:', user.id); // Log for debugging
     setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
@@ -288,25 +288,22 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
             </CardTitle>
             <div className="flex items-center gap-2">
               {canEditUserDetails && (
-                <button
-                  className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border border-neutral-700 rounded-full flex items-center justify-center"
-                  onClick={() => handleEditClick(user)}
-                  title="Edit User Details"
-                >
+                <Button variant="outline" size="icon" className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full" onClick={() => handleEditClick(user)}>
                   <Edit className="h-4 w-4" />
                   <span className="sr-only">Edit User Details</span>
-                </button>
+                </Button>
               )}
               {canDeleteUsers && (
-                <button
-                  className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive rounded-full flex items-center justify-center"
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
                   disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
                   onClick={() => handleDeleteClick(user)}
-                  title="Delete User"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span className="sr-only">Delete User</span>
-                </button>
+                </Button>
               )}
             </div>
           </CardHeader>

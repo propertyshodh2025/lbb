@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 const queryClient = new QueryClient();
 
 const AppContent = () => { // Create a new component to use hooks
-  const [devRole, setDevRole] = useState<'admin' | 'manager' | 'editor' | 'client' | null>(null);
+  const [devRole, setDevRole] = useState<'admin' | 'manager' | 'editor' | 'client' | 'media_client' | null>(null);
   const location = useLocation(); // Get current location
 
   // Determine if sidebar should be hidden
@@ -25,7 +25,7 @@ const AppContent = () => { // Create a new component to use hooks
         {!hideSidebar && <Sidebar />} {/* Conditionally render Sidebar */}
         <div className="flex flex-col flex-grow">
           <AppHeader />
-          <main className="flex-grow">
+          <main className="flex-grow relative z-10"> {/* Added relative z-10 */}
             <AppRoutes onSelectDevRole={setDevRole} />
           </main>
         </div>
