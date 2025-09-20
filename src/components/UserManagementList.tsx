@@ -1,366 +1,297 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { showSuccess, showError } from '@/utils/toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import React, { useState, useEffect } from 'react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useSession } from '@/components/SessionContextProvider';
-import { Button } from '@/components/ui/button';
-import { Trash2, Edit, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import EditUserForm from './EditUserForm';
-import { Input } from '@/components/ui/input'; // Import Input for search
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useSession } from '@/components/SessionContextProvider';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'react-hot-toast';
+import { User } from 'lucide-react';
 
-interface UserProfile {
+interface Profile {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
-  role: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  avatar_url: string | null;
+  role: string;
+  avatar_url?: string;
 }
 
-interface UserManagementListProps {
-  refreshTrigger?: boolean;
-  filterByRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client' | 'all'; // New prop
-  hideFilters?: boolean; // New prop to hide filters/sort options
-}
-
-const USER_ROLES_FILTER = ['all', 'admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'];
-const SORT_OPTIONS = [
-  { value: 'first_name', label: 'First Name' },
-  { value: 'last_name', label: 'Last Name' },
-  { value: 'email', label: 'Email' },
-  { value: 'role', label: 'Role' },
-];
-
-const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
-const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
-const LIST_USERS_FUNCTION_BASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/list-users`;
-
-const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters = false }: UserManagementListProps) => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State for delete dialog
-  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null); // State to hold user to delete
-  const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
-
-  // --- Debugging Logs ---
-  console.log("UserManagementList Render:");
-  console.log("  isLoading (component):", isLoading);
-  console.log("  isSessionLoading (session context):", isSessionLoading);
-  console.log("  session:", session ? "Exists" : "Null");
-  console.log("  currentUserProfile:", currentUserProfile ? `Exists (Role: ${currentUserProfile.role})` : "Null");
-  // --- End Debugging Logs ---
-
-  const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
-  const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
-
-  console.log("  canEditUserDetails:", canEditUserDetails);
-  console.log("  canDeleteUsers:", canDeleteUsers);
-
-
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState(filterByRole);
-  const [sortBy, setSortBy] = useState('first_name');
-  const [sortOrder, setSortOrder] = useState('asc');
+const UserManagementList = () => {
+  const { session, profile: currentUserProfile } = useSession();
+  const [users, setUsers] = useState<Profile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<Profile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
 
   useEffect(() => {
-    setSelectedRoleFilter(filterByRole); // Update filter if prop changes
-  }, [filterByRole]);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const url = new URL(LIST_USERS_FUNCTION_BASE_URL);
-        if (selectedRoleFilter !== 'all') {
-          url.searchParams.append('role', selectedRoleFilter);
-        }
-        url.searchParams.append('sortBy', sortBy);
-        url.searchParams.append('sortOrder', sortOrder);
-
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error('Error from list-users Edge Function:', result.error);
-          showError(`Failed to load user profiles: ${result.error}`);
-          setUsers([]);
-          return;
-        }
-
-        const filteredBySearch = result.filter((user: UserProfile) =>
-          (user.first_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-        
-        setUsers(filteredBySearch || []);
-        console.log("Fetched users:", filteredBySearch); // Log fetched users
-      } catch (error) {
-        console.error('Error invoking list-users Edge Function:', error);
-        showError('An unexpected error occurred while loading user profiles.');
-        setUsers([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, isDeleteDialogOpen, selectedRoleFilter, sortBy, sortOrder, searchTerm]); // Added isDeleteDialogOpen to dependencies
+    fetchRoles();
+  }, []);
 
-  const handleDeleteUserConfirm = async () => {
-    if (!userToDelete) return;
-    console.log('Attempting to delete user:', userToDelete.id); // Log for debugging
+  useEffect(() => {
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
+    const filtered = users.filter(user =>
+      user.first_name?.toLowerCase().includes(lowercasedSearchTerm) ||
+      user.last_name?.toLowerCase().includes(lowercasedSearchTerm) ||
+      user.email?.toLowerCase().includes(lowercasedSearchTerm) ||
+      user.role?.toLowerCase().includes(lowercasedSearchTerm)
+    );
+    setFilteredUsers(filtered);
+  }, [searchTerm, users]);
 
-    if (!canDeleteUsers) {
-      showError('You do not have permission to delete users.');
+  const fetchUsers = async () => {
+    if (!session) return;
+
+    const { data: usersData, error: usersError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, role, avatar_url, auth.users(email)');
+
+    if (usersError) {
+      toast.error('Error fetching users: ' + usersError.message);
+      console.error('Error fetching users:', usersError);
       return;
     }
 
-    if (userToDelete.id === currentUserProfile?.id) {
-      showError('You cannot delete your own account.');
-      return;
-    }
+    const usersWithEmails = usersData.map((profile: any) => ({
+      ...profile,
+      email: profile.auth.users?.email || 'N/A',
+    }));
 
-    const adminCount = users.filter(u => u.role === 'admin').length;
-    if (userToDelete.role === 'admin' && adminCount <= 1) {
-      showError('Cannot delete the last admin account.');
-      return;
-    }
+    setUsers(usersWithEmails);
+  };
 
-    try {
-      const response = await fetch(DELETE_USER_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ userId: userToDelete.id }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error('Error from Edge Function:', result.error);
-        showError(`Failed to delete user "${userToDelete.email}": ${result.error}`);
-        return;
-      }
-
-      showSuccess(`User "${userToDelete.email}" deleted successfully!`);
-      setUsers(prevUsers => prevUsers.filter(u => u.id !== userToDelete.id));
-    } catch (error) {
-      console.error('Error invoking Edge Function:', error);
-      showError(`An unexpected error occurred while deleting user "${userToDelete.email}".`);
-    } finally {
-      setIsDeleteDialogOpen(false); // Close dialog
-      setUserToDelete(null); // Clear user to delete
+  const fetchRoles = async () => {
+    const { data, error } = await supabase.rpc('get_distinct_roles');
+    if (error) {
+      console.error('Error fetching roles:', error);
+      toast.error('Error fetching roles: ' + error.message);
+    } else {
+      setRoles(data);
     }
   };
 
-  const handleEditClick = (user: UserProfile) => {
-    console.log('Edit button clicked for user:', user.id); // Log for debugging
-    setCurrentUserToEdit(user);
+  const handleEdit = (user: Profile) => {
+    setEditingUser(user);
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteClick = (user: UserProfile) => {
-    console.log('Delete button clicked for user:', user.id); // Log for debugging
-    setUserToDelete(user);
-    setIsDeleteDialogOpen(true);
+  const handleSave = async () => {
+    if (!editingUser) return;
+
+    const { id, first_name, last_name, role } = editingUser;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ first_name, last_name, role })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Error updating user: ' + error.message);
+      console.error('Error updating user:', error);
+    } else {
+      toast.success('User updated successfully!');
+      setIsEditDialogOpen(false);
+      fetchUsers(); // Refresh the list
+    }
   };
 
-  const handleUserUpdated = () => {
-    console.log('User updated, re-fetching users.'); // Log for debugging
-    setUsers([]); // Clear users to force a full re-fetch
-    setIsLoading(true);
-    setIsEditDialogOpen(false); // Close edit dialog
+  const handleDelete = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    // First, delete the user from auth.users, which will cascade to profiles due to RLS
+    const { error: authError } = await supabase.rpc('delete_user_by_id', { user_id_to_delete: userId });
+
+    if (authError) {
+      toast.error('Error deleting user: ' + authError.message);
+      console.error('Error deleting user:', authError);
+    } else {
+      toast.success('User deleted successfully!');
+      fetchUsers(); // Refresh the list
+    }
   };
 
-  const toggleSortOrder = () => {
-    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+  const canEditOrDelete = (userRole: string) => {
+    if (!currentUserProfile) return false;
+    // Admins can edit/delete anyone except other admins (to prevent accidental self-deletion or demotion)
+    if (currentUserProfile.role === 'admin') {
+      return userRole !== 'admin';
+    }
+    // Managers can edit/delete clients and editors
+    if (currentUserProfile.role === 'manager') {
+      return userRole === 'client' || userRole === 'editor';
+    }
+    return false;
   };
-
-  if (isLoading || isSessionLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-20 w-full bg-neutral-700" />
-        <Skeleton className="h-20 w-full bg-neutral-700" />
-        <Skeleton className="h-20 w-full bg-neutral-700" />
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <p className="text-center text-white/70">No users found.</p>
-    );
-  }
 
   return (
-    <div className="space-y-4">
-      {!hideFilters && (
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
-            />
-          </div>
-          <div className="flex-1">
-            <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
-              <SelectTrigger id="role-filter" className="w-full bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
-                <SelectValue placeholder="Filter by Role" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
-                {USER_ROLES_FILTER.map((role) => (
-                  <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1 flex items-center gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger id="sort-by" className="flex-1 bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
-                {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="hover:bg-neutral-800 focus:bg-neutral-800">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full">
-              {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
-              <span className="sr-only">Toggle sort order</span>
-            </Button>
-          </div>
-        </div>
-      )}
+    <div className="p-6 bg-neutral-900 text-white/90 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6 text-lime-300 drop-shadow-[0_0_20px_rgba(132,204,22,0.35)]">User Management</h1>
 
-      {users.map((user) => (
-        <Card key={user.id} className="shadow-sm bg-neutral-900 rounded-2xl glass-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold text-white/90">
-              {user.first_name} {user.last_name}
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              {canEditUserDetails && (
-                <Button variant="outline" size="icon" className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full" onClick={() => handleEditClick(user)}>
-                  <Edit className="h-4 w-4" />
-                  <span className="sr-only">Edit User Details</span>
-                </Button>
-              )}
-              {canDeleteUsers && (
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
-                  disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
-                  onClick={() => handleDeleteClick(user)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete User</span>
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-sm text-white/70">{user.email}</p>
-            <p className="text-sm text-white/70">
-              Role: <span className="font-medium capitalize text-lime-300">{user.role}</span>
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+      <div className="mb-6">
+        <Input
+          type="text"
+          placeholder="Search users..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-md bg-neutral-800 border-neutral-700 text-white/90 placeholder:text-white/50 focus:border-lime-500"
+        />
+      </div>
 
-      {/* Edit Dialog */}
-      {currentUserToEdit && ( // Only render if there's a user to edit
+      <div className="rounded-lg border border-neutral-800 overflow-hidden shadow-lg">
+        <Table>
+          <TableHeader className="bg-neutral-800">
+            <TableRow className="border-neutral-700">
+              <TableHead className="text-lime-300">Avatar</TableHead>
+              <TableHead className="text-lime-300">First Name</TableHead>
+              <TableHead className="text-lime-300">Last Name</TableHead>
+              <TableHead className="text-lime-300">Email</TableHead>
+              <TableHead className="text-lime-300">Role</TableHead>
+              <TableHead className="text-lime-300 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers.map((user) => (
+              <TableRow key={user.id} className="border-neutral-700 hover:bg-neutral-800/50">
+                <TableCell>
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={`${user.first_name} ${user.last_name}`} className="w-8 h-8 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-white/70">
+                      <User size={16} />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="font-medium text-white/90">{user.first_name}</TableCell>
+                <TableCell className="text-white/90">{user.last_name}</TableCell>
+                <TableCell className="text-white/70">{user.email}</TableCell>
+                <TableCell className="text-white/70">{user.role}</TableCell>
+                <TableCell className="text-right">
+                  {canEditOrDelete(user.role) && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(user)}
+                        className="mr-2 bg-neutral-700 border-neutral-600 text-white/80 hover:bg-neutral-600 hover:text-lime-300"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(user.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Delete
+                      </Button>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {editingUser && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 z-50">
+          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:max-w-[425px] max-h-[90vh] overflow-y-auto scrollbar-hide bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 z-50">
             <DialogHeader>
               <DialogTitle className="text-white/90">Edit User Profile</DialogTitle>
               <DialogDescription className="text-white/70">
-                Make changes to the user's profile details here. Click save when you're done.
+                Make changes to the user's profile here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
-            <EditUserForm
-              userId={currentUserToEdit.id}
-              initialData={{
-                first_name: currentUserToEdit.first_name || '',
-                last_name: currentUserToEdit.last_name || '',
-                avatar_url: currentUserToEdit.avatar_url || '',
-                email: currentUserToEdit.email,
-                role: currentUserToEdit.role,
-              }}
-              onUserUpdated={handleUserUpdated}
-              onClose={() => setIsEditDialogOpen(false)}
-            />
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="first_name" className="text-right text-white/90">
+                  First Name
+                </Label>
+                <Input
+                  id="first_name"
+                  value={editingUser.first_name || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, first_name: e.target.value })}
+                  className="col-span-3 bg-neutral-800 border-neutral-700 text-white/90"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="last_name" className="text-right text-white/90">
+                  Last Name
+                </Label>
+                <Input
+                  id="last_name"
+                  value={editingUser.last_name || ''}
+                  onChange={(e) => setEditingUser({ ...editingUser, last_name: e.target.value })}
+                  className="col-span-3 bg-neutral-800 border-neutral-700 text-white/90"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right text-white/90">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  value={editingUser.email || ''}
+                  disabled // Email is typically not editable directly here
+                  className="col-span-3 bg-neutral-700 border-neutral-600 text-white/60"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="role" className="text-right text-white/90">
+                  Role
+                </Label>
+                <Select
+                  value={editingUser.role}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                  disabled={!canEditOrDelete(editingUser.role)} // Disable role change if current user can't edit this role
+                >
+                  <SelectTrigger className="col-span-3 bg-neutral-800 border-neutral-700 text-white/90">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-neutral-800 border-neutral-700 text-white/90">
+                    {roles.map((role) => (
+                      <SelectItem key={role} value={role} className="hover:bg-neutral-700">
+                        {role}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                onClick={handleSave}
+                className="bg-lime-600 hover:bg-lime-700 text-white drop-shadow-[0_0_10px_rgba(132,204,22,0.35)]"
+              >
+                Save changes
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
-
-      {/* Delete Alert Dialog */}
-      {userToDelete && ( // Only render if there's a user to delete
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 max-h-[90vh] overflow-y-auto z-50">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription className="text-white/70">
-                This action cannot be undone. This will permanently delete the user
-                "{userToDelete.first_name} {userToDelete.last_name} ({userToDelete.email})" and all associated data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteUserConfirm} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       )}
     </div>
   );
