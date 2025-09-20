@@ -5,7 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import DepartmentCard from '@/components/DepartmentCard';
-import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2, FlaskConical } from 'lucide-react'; // Added FlaskConical icon
+import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2, FlaskConical, UserRound } from 'lucide-react'; // Added UserRound icon for Client Management
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -68,6 +68,12 @@ const AdminDashboard = () => {
               description="Manage employee profiles, roles, and team onboarding."
               icon={Users}
               to="/users"
+            />
+            <DepartmentCard
+              title="Client Management"
+              description="View and add new client accounts."
+              icon={UserRound} // Using UserRound icon for Client Management
+              to="/admin/clients"
             />
             <DepartmentCard
               title="Operations"

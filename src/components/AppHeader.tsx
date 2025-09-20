@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon, Building2, FlaskConical, Code, DollarSign, Scale, TrendingUp, Megaphone } from 'lucide-react'; // Import Building2 icon and FlaskConical
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon, Building2, FlaskConical, Code, DollarSign, Scale, TrendingUp, Megaphone, UserRound } from 'lucide-react'; // Import Building2 icon and FlaskConical
 import { cn } from '@/lib/utils';
 import UserNav from './UserNav';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { to: '/admin/departments/sales', label: 'Sales Department', icon: TrendingUp, roles: ['admin', 'manager'] },
   { to: '/admin/departments/marketing', label: 'Marketing Department', icon: Megaphone, roles: ['admin', 'manager'] },
   { to: '/admin/departments/research', label: 'R&D Department', icon: FlaskConical, roles: ['admin', 'manager'] }, // New R&D Department
+  { to: '/admin/clients', label: 'Client Management', icon: UserRound, roles: ['admin', 'manager'] }, // New Client Management Page
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
   { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },

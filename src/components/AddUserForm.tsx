@@ -36,13 +36,15 @@ type AddUserFormValues = z.infer<typeof formSchema>;
 
 interface AddUserFormProps {
   onUserAdded: () => void;
+  defaultRole?: 'admin' | 'manager' | 'editor' | 'client';
+  hideRoleSelection?: boolean;
 }
 
 const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
 const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
 const CREATE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/create-user`;
 
-const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
+const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFormProps) => {
   const { session } = useSession();
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
@@ -51,7 +53,7 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
       password: '',
       first_name: '',
       last_name: '',
-      role: 'client',
+      role: defaultRole || 'client', // Set default role
     },
   });
 
@@ -80,7 +82,13 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
       }
 
       showSuccess('User added successfully!');
-      form.reset();
+      form.reset({
+        email: '',
+        password: '',
+        first_name: '',
+        last_name: '',
+        role: defaultRole || 'client', // Reset to default role
+      });
       onUserAdded();
     } catch (error) {
       console.error('Error invoking create-user Edge Function:', error);
@@ -143,30 +151,32 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white/70">Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
-                  {USER_ROLES.map((role) => (
-                    <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage className="text-destructive-foreground" />
-            </FormItem>
-          )}
-        />
+        {!hideRoleSelection && (
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-white/70">Role</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                    {USER_ROLES.map((role) => (
+                      <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage className="text-destructive-foreground" />
+              </FormItem>
+            )}
+          />
+        )}
         <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
           Add User
         </Button>

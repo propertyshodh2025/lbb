@@ -48,6 +48,8 @@ interface UserProfile {
 
 interface UserManagementListProps {
   refreshTrigger?: boolean;
+  filterByRole?: 'admin' | 'manager' | 'editor' | 'client' | 'all'; // New prop
+  hideFilters?: boolean; // New prop to hide filters/sort options
 }
 
 const USER_ROLES_FILTER = ['all', 'admin', 'manager', 'editor', 'client'];
@@ -62,7 +64,7 @@ const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
 const DELETE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/delete-user`;
 const LIST_USERS_FUNCTION_BASE_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/list-users`;
 
-const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
+const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters = false }: UserManagementListProps) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -72,10 +74,14 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
   const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
 
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState(filterByRole);
   const [sortBy, setSortBy] = useState('first_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    setSelectedRoleFilter(filterByRole); // Update filter if prop changes
+  }, [filterByRole]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -202,48 +208,50 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
-          />
+      {!hideFilters && (
+        <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
+            />
+          </div>
+          <div className="flex-1">
+            <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
+              <SelectTrigger id="role-filter" className="w-full bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
+                <SelectValue placeholder="Filter by Role" />
+              </SelectTrigger>
+              <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                {USER_ROLES_FILTER.map((role) => (
+                  <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
+                    {role.charAt(0).toUpperCase() + role.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1 flex items-center gap-2">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger id="sort-by" className="flex-1 bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="hover:bg-neutral-800 focus:bg-neutral-800">
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full">
+              {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
+              <span className="sr-only">Toggle sort order</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex-1">
-          <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
-            <SelectTrigger id="role-filter" className="w-full bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
-              <SelectValue placeholder="Filter by Role" />
-            </SelectTrigger>
-            <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
-              {USER_ROLES_FILTER.map((role) => (
-                <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex-1 flex items-center gap-2">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger id="sort-by" className="flex-1 bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="hover:bg-neutral-800 focus:bg-neutral-800">
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full">
-            {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
-            <span className="sr-only">Toggle sort order</span>
-          </Button>
-        </div>
-      </div>
+      )}
 
       {users.map((user) => (
         <Card key={user.id} className="shadow-sm bg-neutral-900 rounded-2xl glass-border">
