@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { showSuccess, showError } from '@/utils/toast';
 import { useSession } from '@/components/SessionContextProvider';
+import { Loader2 } from 'lucide-react'; // Import Loader2 icon
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address.' }),
@@ -46,6 +47,7 @@ const CREATE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/fun
 
 const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFormProps) => {
   const { session } = useSession();
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
   const form = useForm<AddUserFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,6 +65,7 @@ const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFor
       return;
     }
 
+    setIsSubmitting(true); // Set loading true
     try {
       const response = await fetch(CREATE_USER_FUNCTION_URL, {
         method: 'POST',
@@ -93,6 +96,8 @@ const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFor
     } catch (error) {
       console.error('Error invoking create-user Edge Function:', error);
       showError('An unexpected error occurred while adding the user.');
+    } finally {
+      setIsSubmitting(false); // Set loading false
     }
   };
 
@@ -177,8 +182,14 @@ const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFor
             )}
           />
         )}
-        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
-          Add User
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding User...
+            </>
+          ) : (
+            'Add User'
+          )}
         </Button>
       </form>
     </Form>

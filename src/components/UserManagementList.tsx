@@ -69,6 +69,8 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [currentUserToEdit, setCurrentUserToEdit] = useState<UserProfile | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State for delete dialog
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null); // State to hold user to delete
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
   const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
@@ -128,23 +130,24 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
     };
 
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, selectedRoleFilter, sortBy, sortOrder, searchTerm]);
+  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, isDeleteDialogOpen, selectedRoleFilter, sortBy, sortOrder, searchTerm]); // Added isDeleteDialogOpen to dependencies
 
-  const handleDeleteUser = async (userId: string, userEmail: string) => {
+  const handleDeleteUserConfirm = async () => {
+    if (!userToDelete) return;
+    console.log('Attempting to delete user:', userToDelete.id); // Log for debugging
+
     if (!canDeleteUsers) {
       showError('You do not have permission to delete users.');
       return;
     }
 
-    if (userId === currentUserProfile?.id) {
+    if (userToDelete.id === currentUserProfile?.id) {
       showError('You cannot delete your own account.');
       return;
     }
 
     const adminCount = users.filter(u => u.role === 'admin').length;
-    const userToDelete = users.find(u => u.id === userId);
-
-    if (userToDelete?.role === 'admin' && adminCount <= 1) {
+    if (userToDelete.role === 'admin' && adminCount <= 1) {
       showError('Cannot delete the last admin account.');
       return;
     }
@@ -156,34 +159,45 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`,
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: userToDelete.id }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
         console.error('Error from Edge Function:', result.error);
-        showError(`Failed to delete user "${userEmail}": ${result.error}`);
+        showError(`Failed to delete user "${userToDelete.email}": ${result.error}`);
         return;
       }
 
-      showSuccess(`User "${userEmail}" deleted successfully!`);
-      setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
+      showSuccess(`User "${userToDelete.email}" deleted successfully!`);
+      setUsers(prevUsers => prevUsers.filter(u => u.id !== userToDelete.id));
     } catch (error) {
       console.error('Error invoking Edge Function:', error);
-      showError(`An unexpected error occurred while deleting user "${userEmail}".`);
+      showError(`An unexpected error occurred while deleting user "${userToDelete.email}".`);
+    } finally {
+      setIsDeleteDialogOpen(false); // Close dialog
+      setUserToDelete(null); // Clear user to delete
     }
   };
 
   const handleEditClick = (user: UserProfile) => {
+    console.log('Edit button clicked for user:', user.id); // Log for debugging
     setCurrentUserToEdit(user);
     setIsEditDialogOpen(true);
   };
 
+  const handleDeleteClick = (user: UserProfile) => {
+    console.log('Delete button clicked for user:', user.id); // Log for debugging
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
+
   const handleUserUpdated = () => {
-    setUsers([]);
+    console.log('User updated, re-fetching users.'); // Log for debugging
+    setUsers([]); // Clear users to force a full re-fetch
     setIsLoading(true);
-    setIsEditDialogOpen(false);
+    setIsEditDialogOpen(false); // Close edit dialog
   };
 
   const toggleSortOrder = () => {
@@ -267,34 +281,16 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
                 </Button>
               )}
               {canDeleteUsers && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
-                      disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete User</span>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription className="text-white/70">
-                        This action cannot be undone. This will permanently delete the user
-                        "{user.first_name} {user.last_name} ({user.email})" and all associated data.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
+                  disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
+                  onClick={() => handleDeleteClick(user)} // Use new handler
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete User</span>
+                </Button>
               )}
             </div>
           </CardHeader>
@@ -307,7 +303,8 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
         </Card>
       ))}
 
-      {currentUserToEdit && (
+      {/* Edit Dialog */}
+      {currentUserToEdit && ( // Only render if there's a user to edit
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
             <DialogHeader>
@@ -330,6 +327,27 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Delete Alert Dialog */}
+      {userToDelete && ( // Only render if there's a user to delete
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/70">
+                This action cannot be undone. This will permanently delete the user
+                "{userToDelete.first_name} {userToDelete.last_name} ({userToDelete.email})" and all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteUserConfirm} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
