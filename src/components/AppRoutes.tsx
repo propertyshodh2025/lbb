@@ -26,35 +26,44 @@ import LegalDepartmentPage from '@/pages/LegalDepartmentPage'; // New Legal Depa
 import SalesDepartmentPage from '@/pages/SalesDepartmentPage'; // New Sales Department Page
 import MarketingDepartmentPage from '@/pages/MarketingDepartmentPage'; // New Marketing Department Page
 import ResearchDepartmentPage from '@/pages/ResearchDepartmentPage'; // New Research & Development Department Page
-import MediaClientManagementPage from '@/pages/MediaClientManagementPage'; // Renamed Client Management Page
+import SalesManagerManagementPage from '@/pages/SalesManagerManagementPage'; // Renamed Client Management Page
+import SalesManagerDashboard from '@/pages/SalesManagerDashboard'; // New Sales Manager Dashboard
+import WarriorDashboard from '@/pages/WarriorDashboard'; // New Warrior Dashboard
+import DealCloserDashboard from '@/pages/DealCloserDashboard'; // New Deal Closer Dashboard
 import { useSession } from '@/components/SessionContextProvider';
+
+// Define roles for type safety
+type UserRole = 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client';
 
 // Define routes with their allowed roles
 const routesConfig = [
-  { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client', 'media_client'] },
-  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client', 'media_client'] },
-  { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] },
-  { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] },
-  { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] }, // New Admin Dashboard (Office View)
-  { path: "/admin/overview", element: <AdminOverviewPage />, allowedRoles: ['admin'] }, // Old Admin Dashboard content
-  { path: "/admin/departments/media", element: <MediaDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Media Department Page
-  { path: "/admin/departments/tech", element: <TechDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Tech Department Page
-  { path: "/admin/departments/finance", element: <FinanceDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Finance Department Page
-  { path: "/admin/departments/legal", element: <LegalDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Legal Department Page
-  { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Sales Department Page
-  { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Marketing Department Page
-  { path: "/admin/departments/research", element: <ResearchDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Research & Development Department Page
-  { path: "/admin/departments/media/clients", element: <MediaClientManagementPage />, allowedRoles: ['admin', 'manager'] }, // New Media Client Management Page
-  { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
-  { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
-  { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },
-  { path: "/users", element: <UserManagementPage />, allowedRoles: ['admin'] },
-  { path: "/tasks", element: <TasksPage />, allowedRoles: ['admin', 'manager', 'editor'] },
-  { path: "/projects", element: <ProjectsPage />, allowedRoles: ['admin', 'manager'] },
+  { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'] as UserRole[] },
+  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'] as UserRole[] },
+  { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] as UserRole[] },
+  { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] as UserRole[] },
+  { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] as UserRole[] }, // New Admin Dashboard (Office View)
+  { path: "/admin/overview", element: <AdminOverviewPage />, allowedRoles: ['admin'] as UserRole[] }, // Old Admin Dashboard content
+  { path: "/admin/departments/media", element: <MediaDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Media Department Page
+  { path: "/admin/departments/tech", element: <TechDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Tech Department Page
+  { path: "/admin/departments/finance", element: <FinanceDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Finance Department Page
+  { path: "/admin/departments/legal", element: <LegalDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Legal Department Page
+  { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Sales Department Page
+  { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Marketing Department Page
+  { path: "/admin/departments/research", element: <ResearchDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Research & Development Department Page
+  { path: "/admin/departments/sales-management", element: <SalesManagerManagementPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // New Sales Manager Management Page
+  { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] as UserRole[] },
+  { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] as UserRole[] },
+  { path: "/sales-manager-dashboard", element: <SalesManagerDashboard />, allowedRoles: ['admin', 'sales_manager'] as UserRole[] }, // New Sales Manager Dashboard
+  { path: "/warrior-dashboard", element: <WarriorDashboard />, allowedRoles: ['admin', 'warrior'] as UserRole[] }, // New Warrior Dashboard
+  { path: "/deal-closer-dashboard", element: <DealCloserDashboard />, allowedRoles: ['admin', 'deal_closer'] as UserRole[] }, // New Deal Closer Dashboard
+  { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] as UserRole[] }, // Kept 'client' for existing data
+  { path: "/users", element: <UserManagementPage />, allowedRoles: ['admin'] as UserRole[] },
+  { path: "/tasks", element: <TasksPage />, allowedRoles: ['admin', 'manager', 'editor'] as UserRole[] },
+  { path: "/projects", element: <ProjectsPage />, allowedRoles: ['admin', 'manager'] as UserRole[] },
 ];
 
 interface AppRoutesProps {
-  onSelectDevRole: (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => void;
+  onSelectDevRole: (role: UserRole) => void;
 }
 
 const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
@@ -70,7 +79,7 @@ const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
       {showDevHomePage ? (
         <Route path="/" element={<DevHomePage onSelectRole={onSelectDevRole} />} />
       ) : (
-        <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor', 'client', 'media_client']}><RoleBasedRedirect /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client']}><RoleBasedRedirect /></ProtectedRoute>} />
       )}
       {routesConfig.map((route, index) => (
         <Route

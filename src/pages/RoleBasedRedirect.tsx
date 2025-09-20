@@ -37,8 +37,19 @@ const RoleBasedRedirect = () => {
           console.log("RoleBasedRedirect: Navigating to /editor.");
           navigate('/editor');
           break;
+        case 'sales_manager':
+          console.log("RoleBasedRedirect: Navigating to /sales-manager-dashboard.");
+          navigate('/sales-manager-dashboard'); // New dashboard for sales manager
+          break;
+        case 'warrior':
+          console.log("RoleBasedRedirect: Navigating to /warrior-dashboard.");
+          navigate('/warrior-dashboard'); // New dashboard for warrior
+          break;
+        case 'deal_closer':
+          console.log("RoleBasedRedirect: Navigating to /deal-closer-dashboard.");
+          navigate('/deal-closer-dashboard'); // New dashboard for deal closer
+          break;
         case 'client':
-        case 'media_client': // Both client and media_client go to /client dashboard
           console.log("RoleBasedRedirect: Navigating to /client.");
           navigate('/client');
           break;

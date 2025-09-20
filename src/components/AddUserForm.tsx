@@ -30,18 +30,18 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   first_name: z.string().min(1, { message: 'First name is required.' }),
   last_name: z.string().min(1, { message: 'Last name is required.' }),
-  role: z.enum(['admin', 'manager', 'editor', 'client', 'media_client'], { message: 'Please select a valid role.' }),
+  role: z.enum(['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'], { message: 'Please select a valid role.' }),
 });
 
 type AddUserFormValues = z.infer<typeof formSchema>;
 
 interface AddUserFormProps {
   onUserAdded: () => void;
-  defaultRole?: 'admin' | 'manager' | 'editor' | 'client' | 'media_client';
+  defaultRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer';
   hideRoleSelection?: boolean;
 }
 
-const USER_ROLES = ['admin', 'manager', 'editor', 'client', 'media_client'];
+const USER_ROLES = ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'];
 const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
 const CREATE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/create-user`;
 
@@ -55,7 +55,7 @@ const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFor
       password: '',
       first_name: '',
       last_name: '',
-      role: defaultRole || 'client', // Set default role
+      role: defaultRole || 'editor', // Set new default role
     },
   });
 
@@ -90,7 +90,7 @@ const AddUserForm = ({ onUserAdded, defaultRole, hideRoleSelection }: AddUserFor
         password: '',
         first_name: '',
         last_name: '',
-        role: defaultRole || 'client', // Reset to default role
+        role: defaultRole || 'editor', // Reset to new default role
       });
       onUserAdded();
     } catch (error) {

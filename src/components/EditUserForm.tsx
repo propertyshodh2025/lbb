@@ -31,7 +31,7 @@ const editUserFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
   last_name: z.string().min(1, { message: 'Last name is required.' }).optional().or(z.literal('')),
   avatar_url: z.string().url({ message: 'Must be a valid URL.' }).optional().or(z.literal('')),
-  role: z.enum(['admin', 'manager', 'editor', 'client'], { message: 'Please select a valid role.' }),
+  role: z.enum(['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'], { message: 'Please select a valid role.' }),
 });
 
 type EditUserFormValues = z.infer<typeof editUserFormSchema>;
@@ -43,7 +43,7 @@ interface EditUserFormProps {
   onClose: () => void;
 }
 
-const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
+const USER_ROLES = ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'];
 
 const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);

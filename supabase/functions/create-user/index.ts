@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     // Validate role against allowed roles
-    const allowedRoles = ['admin', 'manager', 'editor', 'client', 'media_client'];
+    const allowedRoles = ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'];
     if (!allowedRoles.includes(role)) {
       return new Response(JSON.stringify({ error: `Invalid role provided: ${role}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

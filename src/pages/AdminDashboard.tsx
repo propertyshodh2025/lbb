@@ -5,7 +5,7 @@ import { useSession } from '@/components/SessionContextProvider';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import DepartmentCard from '@/components/DepartmentCard';
-import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2, FlaskConical, UserRound } from 'lucide-react'; // Added UserRound icon for Client Management
+import { Briefcase, Users, Settings, Code, DollarSign, Scale, TrendingUp, Megaphone, Building2, FlaskConical, UserRound, Handshake } from 'lucide-react'; // Added Handshake icon for Sales Management
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -64,12 +64,11 @@ const AdminDashboard = () => {
               to="/admin/departments/media"
             />
             <DepartmentCard
-              title="User Management" // Renamed from Human Resources
-              description="Manage all employee and client profiles, roles, and team onboarding." // Updated description
+              title="User Management"
+              description="Manage all employee and client profiles, roles, and team onboarding."
               icon={Users}
               to="/users"
             />
-            {/* Removed the old Client Management card */}
             <DepartmentCard
               title="Operations"
               description="Access overall project statistics, administrative tasks, and system settings."
@@ -99,6 +98,12 @@ const AdminDashboard = () => {
               description="Track client acquisition, sales pipelines, and revenue growth."
               icon={TrendingUp}
               to="/admin/departments/sales"
+            />
+            <DepartmentCard
+              title="Sales Manager Management" // New card for Sales Manager Management
+              description="Manage sales managers, warriors, and deal closers."
+              icon={Handshake}
+              to="/admin/departments/sales-management"
             />
             <DepartmentCard
               title="Marketing Department"

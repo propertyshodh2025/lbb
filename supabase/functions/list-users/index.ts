@@ -65,7 +65,7 @@ serve(async (req) => {
         email: authUser.email,
         first_name: profile?.first_name || null,
         last_name: profile?.last_name || null,
-        role: profile?.role || 'client', // Default role if not found in profile
+        role: profile?.role || 'editor', // Default role if not found in profile, changed from 'client'
         avatar_url: profile?.avatar_url || null,
       };
     });

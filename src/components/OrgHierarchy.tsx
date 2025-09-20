@@ -114,7 +114,7 @@ const OrgHierarchy = () => {
     );
   }
 
-  const roleOrder = ['admin', 'manager', 'editor', 'client'];
+  const roleOrder = ['admin', 'manager', 'sales_manager', 'warrior', 'deal_closer', 'editor', 'client'];
 
   return (
     <Card className="w-full bg-neutral-900 rounded-2xl glass-border">

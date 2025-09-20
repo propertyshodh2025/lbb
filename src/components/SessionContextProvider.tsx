@@ -6,9 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { showError } from '@/utils/toast';
 
+type UserRole = 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client'; // Keep 'client' for existing data, but remove from new options
+
 interface Profile {
   id: string;
-  role: string;
+  role: UserRole;
   first_name: string;
   last_name: string;
   avatar_url: string;
@@ -25,7 +27,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 interface SessionContextProviderProps {
   children: React.ReactNode;
-  devRole: 'admin' | 'manager' | 'editor' | 'client' | 'media_client' | null; // New prop
+  devRole: UserRole | null; // New prop
 }
 
 export const SessionContextProvider = ({ children, devRole }: SessionContextProviderProps) => {
@@ -79,7 +81,7 @@ export const SessionContextProvider = ({ children, devRole }: SessionContextProv
       if (isMounted) setIsLoading(false);
     };
 
-    const setupDevSession = (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => {
+    const setupDevSession = (role: UserRole) => {
       setIsLoading(false);
       const mockUserId = `dev-user-${role}-id`; // Consistent mock ID
       const mockEmail = `${role}@example.com`;

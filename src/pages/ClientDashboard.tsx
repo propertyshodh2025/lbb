@@ -37,7 +37,7 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     const fetchClientTasks = async () => {
-      if (!user?.id || (!['client', 'media_client'].includes(profile?.role || ''))) {
+      if (!user?.id || (!['client'].includes(profile?.role || ''))) { // Only 'client' role can view this dashboard
         setIsTasksLoading(false);
         setClientTasks([]);
         return;
@@ -138,7 +138,7 @@ const ClientDashboard = () => {
     );
   }
 
-  if (!['client', 'media_client', 'admin'].includes(profile?.role || '')) {
+  if (!['client', 'admin'].includes(profile?.role || '')) { // Admin can also view client dashboard
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
         <Card className="w-full max-w-md text-center bg-neutral-900 rounded-2xl glass-border">

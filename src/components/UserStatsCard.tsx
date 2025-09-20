@@ -5,14 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
+import { showError } => '@/utils/toast';
 import { Users as UsersIcon } from 'lucide-react';
 
 interface RoleCounts {
   admin: number;
   manager: number;
   editor: number;
-  client: number;
+  sales_manager: number;
+  warrior: number;
+  deal_closer: number;
+  client: number; // Keep client for existing data
   total: number;
 }
 
@@ -36,6 +39,9 @@ const UserStatsCard = () => {
           admin: 0,
           manager: 0,
           editor: 0,
+          sales_manager: 0,
+          warrior: 0,
+          deal_closer: 0,
           client: 0,
           total: 0,
         };
@@ -105,6 +111,18 @@ const UserStatsCard = () => {
         <div className="flex items-center justify-between">
           <p className="text-sm text-white/70">Editors:</p>
           <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.editor}</Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-white/70">Sales Managers:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.sales_manager}</Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-white/70">Warriors:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.warrior}</Badge>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-white/70">Deal Closers:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.deal_closer}</Badge>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-sm text-white/70">Clients:</p>

@@ -73,12 +73,7 @@ const MediaDepartmentPage = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-white/90">Work Overview</h3>
               <WorkOverviewCards />
-              <DepartmentCard
-                title="Media Clients"
-                description="Manage clients specifically for media production projects."
-                icon={UserRound}
-                to="/admin/departments/media/clients"
-              />
+              {/* Removed the specific Media Clients card as 'client' role is now generic */}
             </div>
 
             {/* Right Side: Organizational Hierarchy */}

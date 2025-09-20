@@ -5,7 +5,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useSession } from './SessionContextProvider';
 
 interface ProtectedRouteProps {
-  allowedRoles?: string[];
+  allowedRoles?: ('admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client')[];
   children: React.ReactNode;
 }
 
