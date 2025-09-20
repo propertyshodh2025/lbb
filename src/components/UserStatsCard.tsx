@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
-import { showError } => '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { Users as UsersIcon } from 'lucide-react';
 
 interface RoleCounts {
