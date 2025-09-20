@@ -29,6 +29,7 @@ import ResearchDepartmentPage from '@/pages/ResearchDepartmentPage'; // New Rese
 import SalesManagerDashboard from '@/pages/SalesManagerDashboard'; // New Sales Manager Dashboard
 import WarriorDashboard from '@/pages/WarriorDashboard'; // New Warrior Dashboard
 import DealCloserDashboard from '@/pages/DealCloserDashboard'; // New Deal Closer Dashboard
+import ClientManagementPage from '@/pages/ClientManagementPage'; // New Client Management Page
 import { useSession } from '@/components/SessionContextProvider';
 
 // Define roles for type safety
@@ -43,6 +44,7 @@ const routesConfig = [
   { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] as UserRole[] }, // New Admin Dashboard (Office View)
   { path: "/admin/overview", element: <AdminOverviewPage />, allowedRoles: ['admin'] as UserRole[] }, // Old Admin Dashboard content
   { path: "/admin/departments/media", element: <MediaDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Media Department Page
+  { path: "/admin/departments/media/clients", element: <ClientManagementPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // New Client Management Page
   { path: "/admin/departments/tech", element: <TechDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Tech Department Page
   { path: "/admin/departments/finance", element: <FinanceDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Finance Department Page
   { path: "/admin/departments/legal", element: <LegalDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Legal Department Page

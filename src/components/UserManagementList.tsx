@@ -48,11 +48,11 @@ interface UserProfile {
 
 interface UserManagementListProps {
   refreshTrigger?: boolean;
-  filterByRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'all'; // New prop
+  filterByRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client' | 'all'; // New prop
   hideFilters?: boolean; // New prop to hide filters/sort options
 }
 
-const USER_ROLES_FILTER = ['all', 'admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'];
+const USER_ROLES_FILTER = ['all', 'admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'];
 const SORT_OPTIONS = [
   { value: 'first_name', label: 'First Name' },
   { value: 'last_name', label: 'Last Name' },

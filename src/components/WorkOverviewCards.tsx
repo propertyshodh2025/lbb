@@ -112,7 +112,7 @@ const WorkOverviewCards = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Link to="/projects" className="block">
+      <Link to="/admin/departments/media/clients" className="block"> {/* Updated link */}
         <Card className="h-full flex flex-col justify-between shadow-lg bg-neutral-900 rounded-2xl glass-border hover:border-lime-400 transition-colors duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold text-white/90">Clients</CardTitle>

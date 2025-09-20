@@ -30,18 +30,18 @@ const formSchema = z.object({
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   first_name: z.string().min(1, { message: 'First name is required.' }),
   last_name: z.string().min(1, { message: 'Last name is required.' }),
-  role: z.enum(['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'], { message: 'Please select a valid role.' }),
+  role: z.enum(['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'], { message: 'Please select a valid role.' }),
 });
 
 type AddUserFormValues = z.infer<typeof formSchema>;
 
 interface AddUserFormProps {
   onUserAdded: () => void;
-  defaultRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer';
+  defaultRole?: 'admin' | 'manager' | 'editor' | 'sales_manager' | 'warrior' | 'deal_closer' | 'client';
   hideRoleSelection?: boolean;
 }
 
-const USER_ROLES = ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer'];
+const USER_ROLES = ['admin', 'manager', 'editor', 'sales_manager', 'warrior', 'deal_closer', 'client'];
 const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
 const CREATE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/create-user`;
 
