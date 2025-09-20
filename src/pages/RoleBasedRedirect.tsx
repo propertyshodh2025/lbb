@@ -10,8 +10,10 @@ const RoleBasedRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("RoleBasedRedirect useEffect: isLoading", isLoading, "session", !!session, "profile", profile);
     if (!isLoading) {
       if (!session) {
+        console.log("RoleBasedRedirect: No session, navigating to /login.");
         navigate('/login');
         return;
       }
@@ -24,19 +26,23 @@ const RoleBasedRedirect = () => {
 
       switch (profile.role) {
         case 'admin':
+          console.log("RoleBasedRedirect: Navigating to /admin.");
           navigate('/admin');
           break;
         case 'manager':
+          console.log("RoleBasedRedirect: Navigating to /manager.");
           navigate('/manager');
           break;
         case 'editor':
+          console.log("RoleBasedRedirect: Navigating to /editor.");
           navigate('/editor');
           break;
         case 'client':
+          console.log("RoleBasedRedirect: Navigating to /client.");
           navigate('/client');
           break;
         default:
-          console.warn("Unknown role or profile not fully loaded:", profile?.role);
+          console.warn("RoleBasedRedirect: Unknown role or profile not fully loaded:", profile?.role);
           navigate('/complete-profile');
           break;
       }

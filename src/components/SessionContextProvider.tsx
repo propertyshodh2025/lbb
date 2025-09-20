@@ -38,6 +38,7 @@ export const SessionContextProvider = ({ children, devRole }: SessionContextProv
 
   useEffect(() => {
     let isMounted = true;
+    console.log("SessionContextProvider useEffect: devRole changed to", devRole);
 
     const handleSessionAndProfile = async (currentSession: Session | null) => {
       if (!isMounted) return;
@@ -115,6 +116,8 @@ export const SessionContextProvider = ({ children, devRole }: SessionContextProv
       setSession(mockSession);
       setUser(mockUser);
       setProfile(mockProfile);
+      console.log(`SessionContextProvider: Mock session set for role: ${role}`);
+      // After setting mock session, the AppRoutes will re-evaluate and redirect via RoleBasedRedirect
     };
 
     if (devRole) {

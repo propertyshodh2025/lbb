@@ -3,34 +3,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+// Removed useNavigate as direct navigation will be handled by SessionContextProvider and RoleBasedRedirect
 
 interface DevHomePageProps {
   onSelectRole: (role: 'admin' | 'manager' | 'editor' | 'client') => void;
 }
 
 const DevHomePage = ({ onSelectRole }: DevHomePageProps) => {
-  const navigate = useNavigate();
-
   const handleRoleSelect = (role: 'admin' | 'manager' | 'editor' | 'client') => {
+    console.log(`DevHomePage: Selected role: ${role}`);
     onSelectRole(role);
-    // Navigate to the appropriate dashboard after setting the role
-    switch (role) {
-      case 'admin':
-        navigate('/admin');
-        break;
-      case 'manager':
-        navigate('/manager');
-        break;
-      case 'editor':
-        navigate('/editor');
-        break;
-      case 'client':
-        navigate('/client');
-        break;
-      default:
-        navigate('/');
-    }
+    // Removed explicit navigate calls.
+    // The SessionContextProvider's useEffect will detect the new session
+    // and RoleBasedRedirect will handle the final navigation based on the profile.
   };
 
   return (
