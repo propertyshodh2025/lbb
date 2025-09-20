@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
-import TimelineTracker from '@/components/TimelineTracker';
-import { Package, Clock, CheckCircle, Download } from 'lucide-react'; // Import Download icon
+import ClientKanbanBoard from '@/components/ClientKanbanBoard'; // Import the new ClientKanbanBoard
+import { Package, Clock, CheckCircle, Download } from 'lucide-react';
 
 interface TaskWithHistory {
   id: string;
@@ -16,14 +16,18 @@ interface TaskWithHistory {
   status: string;
   created_at: string;
   due_date: string | null;
+  attachments: string[];
+  projects: { title: string } | null;
+  profiles: { // For assigned editor
+    first_name: string;
+    last_name: string;
+  } | null;
   task_status_history: {
     id: string;
     status: string;
     notes: string | null;
     timestamp: string;
   }[];
-  projects: { title: string } | null;
-  attachments: string[]; // New attachments field
 }
 
 const ClientDashboard = () => {
@@ -34,7 +38,6 @@ const ClientDashboard = () => {
   useEffect(() => {
     const fetchClientTasks = async () => {
       if (!user?.id || profile?.role !== 'client') {
-        // If no user or not a client, stop loading and clear tasks
         setIsTasksLoading(false);
         setClientTasks([]);
         return;
@@ -42,7 +45,6 @@ const ClientDashboard = () => {
 
       setIsTasksLoading(true);
 
-      // Step 1: Fetch all project IDs for the current client
       const { data: clientProjects, error: projectsError } = await supabase
         .from('projects')
         .select('id')
@@ -59,13 +61,11 @@ const ClientDashboard = () => {
       const projectIds = clientProjects?.map(p => p.id) || [];
 
       if (projectIds.length === 0) {
-        // If no projects found for the client, set tasks to empty and stop loading
         setClientTasks([]);
         setIsTasksLoading(false);
         return;
       }
 
-      // Step 2: Use the fetched project IDs to get tasks
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select(`
@@ -77,9 +77,10 @@ const ClientDashboard = () => {
             due_date,
             attachments,
             projects (title),
+            profiles (first_name, last_name),
             task_status_history (id, status, notes, timestamp)
           `)
-        .in('project_id', projectIds) // Filter tasks by the client's project IDs
+        .in('project_id', projectIds)
         .order('created_at', { ascending: false });
 
       if (tasksError) {
@@ -98,12 +99,11 @@ const ClientDashboard = () => {
 
     fetchClientTasks();
 
-    // Subscribe to changes in tasks and projects relevant to the client
     const tasksSubscription = supabase
       .channel(`client_tasks:${user?.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
         console.log('Client task change received!', payload);
-        fetchClientTasks(); // Re-fetch tasks on any change relevant to this client's projects
+        fetchClientTasks();
       })
       .subscribe();
 
@@ -111,7 +111,7 @@ const ClientDashboard = () => {
       .channel(`client_projects:${user?.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects', filter: `client_id=eq.${user?.id}` }, payload => {
         console.log('Client project change received!', payload);
-        fetchClientTasks(); // Re-fetch tasks if projects change
+        fetchClientTasks();
       })
       .subscribe();
 
@@ -119,7 +119,7 @@ const ClientDashboard = () => {
       supabase.removeChannel(tasksSubscription);
       supabase.removeChannel(projectsSubscription);
     };
-  }, [user, profile, isSessionLoading]); // Depend on user, profile, and session loading state
+  }, [user, profile, isSessionLoading]);
 
   if (isSessionLoading || isTasksLoading) {
     return (
@@ -153,21 +153,23 @@ const ClientDashboard = () => {
     );
   }
 
-  const activeTasks = clientTasks.filter(t => t.status !== 'Completed');
-  const completedTasks = clientTasks.filter(t => t.status === 'Completed');
+  const totalTasks = clientTasks.length;
+  const inProgressTasksCount = clientTasks.filter(t => ['Assigned', 'In Progress', 'Under Review'].includes(t.status)).length;
+  const completedTasksCount = clientTasks.filter(t => t.status === 'Completed').length;
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
       <Card className="w-full max-w-6xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Client Dashboard</CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Track the progress of your tasks.</p>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Track the progress of your video projects.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Welcome, {profile?.first_name || 'Client'}! Here are your tasks:
+            Welcome, {profile?.first_name || 'Client'}! Here's an overview of your projects:
           </p>
 
+          {/* Stats Overview */}
           <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="dark:bg-gray-900">
               <CardContent className="p-6 flex items-center">
@@ -175,8 +177,8 @@ const ClientDashboard = () => {
                   <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{clientTasks.length}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Videos</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalTasks}</p>
                 </div>
               </CardContent>
             </Card>
@@ -187,8 +189,8 @@ const ClientDashboard = () => {
                   <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeTasks.length}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{inProgressTasksCount}</p>
                 </div>
               </CardContent>
             </Card>
@@ -199,71 +201,49 @@ const ClientDashboard = () => {
                   <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedTasks.length}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedTasksCount}</p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {activeTasks.length > 0 && (
-            <div className="mb-10">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Active Tasks</h2>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {activeTasks.length} task{activeTasks.length !== 1 ? 's' : ''} in progress
-                </div>
-              </div>
-              <TimelineTracker tasks={activeTasks} />
-            </div>
-          )}
-
-          {completedTasks.length > 0 && (
-            <div className="mb-10">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Completed Tasks</h2>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {completedTasks.length} task{completedTasks.length !== 1 ? 's' : ''} completed
-                </div>
-              </div>
-              <div className="space-y-4">
-                {completedTasks.map((task) => (
-                  <Card key={task.id} className="dark:bg-gray-900">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-gray-900 dark:text-white">{task.title}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{task.projects?.title}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Completed
-                          </div>
-                          {task.attachments && task.attachments.length > 0 && (
-                            <div className="flex justify-end mt-1">
-                              {task.attachments.map((url, index) => (
-                                <Button key={index} variant="ghost" size="icon" asChild className="h-6 w-6">
-                                  <a href={url} target="_blank" rel="noopener noreferrer" download>
-                                    <Download className="h-3 w-3" />
-                                    <span className="sr-only">Download file</span>
-                                  </a>
-                                </Button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Kanban Board */}
+          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Status Overview</h3>
+            <ClientKanbanBoard tasks={clientTasks} />
+          </div>
 
           {clientTasks.length === 0 && (
             <p className="text-center text-gray-500 dark:text-gray-400">You currently have no tasks.</p>
           )}
+
+          {/* Help Section */}
+          <Card className="mt-10 bg-blue-50 dark:bg-blue-900">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                Understanding Your Project Status
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="space-y-2">
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <Package className="w-4 h-4 text-blue-600 dark:text-blue-400 mr-2" />
+                    <span><strong>Raw Files Received:</strong> Your files have been received and catalogued.</span>
+                  </div>
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400 mr-2" />
+                    <span><strong>In Progress:</strong> Our editors are actively working on your project.</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center text-gray-700 dark:text-gray-300">
+                    <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mr-2" />
+                    <span><strong>Completed:</strong> Editing is finished, and the project is ready.</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     </div>
