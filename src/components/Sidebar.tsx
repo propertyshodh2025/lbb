@@ -70,7 +70,7 @@ const Sidebar = () => {
           </Link>
         )}
       </div>
-      <nav className="flex-1 py-4 space-y-2">
+      <nav className="flex-1 py-4 space-y-2 overflow-y-auto">
         {filteredNavItems.map((item) => (
           <Button
             key={item.to}
