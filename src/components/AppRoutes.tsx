@@ -20,7 +20,12 @@ import ProjectsPage from '@/pages/ProjectsPage';
 import CompleteProfilePage from '@/pages/CompleteProfilePage';
 import DevHomePage from '@/pages/DevHomePage';
 import MediaDepartmentPage from '@/pages/MediaDepartmentPage'; // New Media Department Page
-import { useSession } from '@/components/SessionContextProvider'; // <--- Added this import
+import TechDepartmentPage from '@/pages/TechDepartmentPage'; // New Tech Department Page
+import FinanceDepartmentPage from '@/pages/FinanceDepartmentPage'; // New Finance Department Page
+import LegalDepartmentPage from '@/pages/LegalDepartmentPage'; // New Legal Department Page
+import SalesDepartmentPage from '@/pages/SalesDepartmentPage'; // New Sales Department Page
+import MarketingDepartmentPage from '@/pages/MarketingDepartmentPage'; // New Marketing Department Page
+import { useSession } from '@/components/SessionContextProvider';
 
 // Define routes with their allowed roles
 const routesConfig = [
@@ -31,6 +36,11 @@ const routesConfig = [
   { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] }, // New Admin Dashboard (Office View)
   { path: "/admin/overview", element: <AdminOverviewPage />, allowedRoles: ['admin'] }, // Old Admin Dashboard content
   { path: "/admin/departments/media", element: <MediaDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Media Department Page
+  { path: "/admin/departments/tech", element: <TechDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Tech Department Page
+  { path: "/admin/departments/finance", element: <FinanceDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Finance Department Page
+  { path: "/admin/departments/legal", element: <LegalDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Legal Department Page
+  { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Sales Department Page
+  { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Marketing Department Page
   { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
   { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },
