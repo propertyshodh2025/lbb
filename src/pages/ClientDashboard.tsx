@@ -33,11 +33,42 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     const fetchClientTasks = async () => {
-      if (user?.id && profile?.role === 'client') {
-        setIsTasksLoading(true);
-        const { data, error } = await supabase
-          .from('tasks')
-          .select(`
+      if (!user?.id || profile?.role !== 'client') {
+        // If no user or not a client, stop loading and clear tasks
+        setIsTasksLoading(false);
+        setClientTasks([]);
+        return;
+      }
+
+      setIsTasksLoading(true);
+
+      // Step 1: Fetch all project IDs for the current client
+      const { data: clientProjects, error: projectsError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('client_id', user.id);
+
+      if (projectsError) {
+        console.error('Error fetching client projects:', projectsError);
+        showError('Failed to load your projects.');
+        setClientTasks([]);
+        setIsTasksLoading(false);
+        return;
+      }
+
+      const projectIds = clientProjects?.map(p => p.id) || [];
+
+      if (projectIds.length === 0) {
+        // If no projects found for the client, set tasks to empty and stop loading
+        setClientTasks([]);
+        setIsTasksLoading(false);
+        return;
+      }
+
+      // Step 2: Use the fetched project IDs to get tasks
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select(`
             id,
             title,
             description,
@@ -48,24 +79,21 @@ const ClientDashboard = () => {
             projects (title),
             task_status_history (id, status, notes, timestamp)
           `)
-          .in('project_id', supabase.from('projects').select('id').eq('client_id', user.id))
-          .order('created_at', { ascending: false });
+        .in('project_id', projectIds) // Filter tasks by the client's project IDs
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching client tasks:', error);
-          showError('Failed to load your tasks.');
-          setClientTasks([]);
-        } else {
-          const sortedTasks = data?.map(task => ({
-            ...task,
-            task_status_history: task.task_status_history.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-          })) || [];
-          setClientTasks(sortedTasks);
-        }
-        setIsTasksLoading(false);
-      } else if (!isSessionLoading) {
-        setIsTasksLoading(false);
+      if (tasksError) {
+        console.error('Error fetching client tasks:', tasksError);
+        showError('Failed to load your tasks.');
+        setClientTasks([]);
+      } else {
+        const sortedTasks = tasksData?.map(task => ({
+          ...task,
+          task_status_history: task.task_status_history.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        })) || [];
+        setClientTasks(sortedTasks);
       }
+      setIsTasksLoading(false);
     };
 
     fetchClientTasks();
@@ -75,9 +103,7 @@ const ClientDashboard = () => {
       .channel(`client_tasks:${user?.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
         console.log('Client task change received!', payload);
-        // Re-fetch tasks if the change is relevant to this client's projects
-        // This is a broad re-fetch, can be optimized with more specific filters if needed
-        fetchClientTasks();
+        fetchClientTasks(); // Re-fetch tasks on any change relevant to this client's projects
       })
       .subscribe();
 
@@ -93,7 +119,7 @@ const ClientDashboard = () => {
       supabase.removeChannel(tasksSubscription);
       supabase.removeChannel(projectsSubscription);
     };
-  }, [user, profile, isSessionLoading]);
+  }, [user, profile, isSessionLoading]); // Depend on user, profile, and session loading state
 
   if (isSessionLoading || isTasksLoading) {
     return (
