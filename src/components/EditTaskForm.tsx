@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
-import { useSession } from './SessionContextProvider'; // Import useSession
+import { useSession } from './SessionContextProvider';
 
 const formSchema = z.object({
   title: z.string().min(1, { message: 'Task title is required.' }),
@@ -46,7 +46,7 @@ interface Editor {
 
 interface EditTaskFormProps {
   taskId: string;
-  initialData: TaskFormValues & { currentStatus: string }; // Include currentStatus
+  initialData: TaskFormValues & { currentStatus: string };
   onTaskUpdated: () => void;
   onClose: () => void;
 }
@@ -54,7 +54,7 @@ interface EditTaskFormProps {
 const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskFormProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [editors, setEditors] = useState<Editor[]>([]);
-  const { user, isLoading: isSessionLoading } = useSession(); // Get current user
+  const { user, isLoading: isSessionLoading } = useSession();
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(formSchema),
@@ -63,7 +63,6 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch projects
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
         .select('id, title')
@@ -76,7 +75,6 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
         setProjects(projectsData || []);
       }
 
-      // Fetch editors
       const { data: editorsData, error: editorsError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
@@ -103,7 +101,7 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
     }
 
     const assignedToUuid = values.assigned_to === '' ? null : values.assigned_to;
-    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received'; // Update status based on assignment
+    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received';
 
     const { error } = await supabase
       .from('tasks')
@@ -111,7 +109,7 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
         title: values.title,
         project_id: values.project_id,
         assigned_to: assignedToUuid,
-        status: newStatus, // Update status based on assignment
+        status: newStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', taskId);
@@ -120,7 +118,6 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
       console.error('Error updating task:', error);
       showError('Failed to update task.');
     } else {
-      // Insert into task_status_history if status or assignment changed
       if (newStatus !== initialData.currentStatus || assignedToUuid !== initialData.assigned_to) {
         const { error: historyError } = await supabase.from('task_status_history').insert({
           task_id: taskId,
@@ -135,8 +132,8 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
       }
 
       showSuccess('Task updated successfully!');
-      onTaskUpdated(); // Notify parent component
-      onClose(); // Close the dialog
+      onTaskUpdated();
+      onClose();
     }
   };
 
@@ -148,11 +145,11 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Task Title</FormLabel>
+              <FormLabel className="text-white/70">Task Title</FormLabel>
               <FormControl>
-                <Input placeholder="Enter task title" {...field} />
+                <Input placeholder="Enter task title" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -161,22 +158,22 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
           name="project_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Project</FormLabel>
+              <FormLabel className="text-white/70">Project</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
+                    <SelectItem key={project.id} value={project.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {project.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -185,27 +182,27 @@ const EditTaskForm = ({ taskId, initialData, onTaskUpdated, onClose }: EditTaskF
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign To (Editor)</FormLabel>
+              <FormLabel className="text-white/70">Assign To (Editor)</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ''}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select an editor (optional)" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                  <SelectItem value="" className="hover:bg-neutral-800 focus:bg-neutral-800">Unassigned</SelectItem>
                   {editors.map((editor) => (
-                    <SelectItem key={editor.id} value={editor.id}>
+                    <SelectItem key={editor.id} value={editor.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {editor.first_name} {editor.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSessionLoading}>
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isSessionLoading}>
           Update Task
         </Button>
       </form>

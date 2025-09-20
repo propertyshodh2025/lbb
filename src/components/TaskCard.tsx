@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { DraggableProvided } from '@dnd-kit/core';
 import { Link } from 'react-router-dom';
-import { CalendarDays } from 'lucide-react'; // Import CalendarDays icon
+import { CalendarDays } from 'lucide-react';
 
 interface TaskCardProps {
   task: {
@@ -30,27 +30,27 @@ interface TaskCardProps {
 const TaskCard = ({ task, dragHandleProps, listeners, style, isDragging }: TaskCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Raw files received': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'Unassigned': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-      case 'Assigned': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'In Progress': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-      case 'Completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'Under Review': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+      case 'Raw files received': return 'bg-lime-950 text-lime-400';
+      case 'Unassigned': return 'bg-neutral-700 text-white/70';
+      case 'Assigned': return 'bg-yellow-900 text-yellow-400';
+      case 'In Progress': return 'bg-orange-900 text-orange-400';
+      case 'Completed': return 'bg-green-900 text-green-400';
+      case 'Under Review': return 'bg-purple-900 text-purple-400';
+      default: return 'bg-neutral-700 text-white/70';
     }
   };
 
   return (
     <Card
-      className={`cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow dark:bg-gray-700 ${isDragging ? 'shadow-2xl opacity-70' : ''}`}
+      className={`cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow bg-neutral-800 rounded-2xl glass-border ${isDragging ? 'shadow-2xl opacity-70' : ''}`}
       style={style}
       {...dragHandleProps}
       {...listeners}
     >
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-sm font-medium text-gray-900 dark:text-white">
-            <Link to={`/tasks/${task.id}`} className="hover:underline">
+          <CardTitle className="text-sm font-medium text-white/90">
+            <Link to={`/tasks/${task.id}`} className="hover:underline text-lime-300">
               {task.title}
             </Link>
           </CardTitle>
@@ -59,19 +59,19 @@ const TaskCard = ({ task, dragHandleProps, listeners, style, isDragging }: TaskC
           </Badge>
         </div>
         {task.projects && (
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-white/70">
             Project: {task.projects.title}
           </p>
         )}
       </CardHeader>
       <CardContent className="pt-0">
         {task.description && (
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{task.description}</p>
+          <p className="text-xs text-white/70 mb-2 line-clamp-2">{task.description}</p>
         )}
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <div className="flex items-center justify-between text-xs text-white/70 mt-2">
           {task.due_date && (
             <div className="flex items-center gap-1">
-              <CalendarDays className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+              <CalendarDays className="h-3 w-3 text-white/70" />
               Due: {format(new Date(task.due_date), 'MMM dd')}
             </div>
           )}

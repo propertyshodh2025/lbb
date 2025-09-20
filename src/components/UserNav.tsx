@@ -18,14 +18,14 @@ import LogoutButton from '@/components/LogoutButton';
 import { User as UserIcon } from 'lucide-react';
 
 interface UserNavProps {
-  isCollapsed?: boolean; // Optional prop for sidebar collapsed state
+  isCollapsed?: boolean;
 }
 
 const UserNav = ({ isCollapsed = false }: UserNavProps) => {
   const { user, profile, isLoading } = useSession();
 
   if (isLoading || !user || !profile) {
-    return null; // Don't render if session is loading or user/profile is not available
+    return null;
   }
 
   const displayName = profile.first_name && profile.last_name
@@ -39,33 +39,33 @@ const UserNav = ({ isCollapsed = false }: UserNavProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full bg-neutral-800 hover:bg-neutral-700">
           <Avatar className="h-8 w-8">
             <AvatarImage src={profile.avatar_url || undefined} alt={displayName} />
-            <AvatarFallback>{initials}</AvatarFallback>
+            <AvatarFallback className="bg-neutral-700 text-white/70">{initials}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-56 bg-neutral-900 text-white/90 border-neutral-800 rounded-2xl" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{displayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-medium leading-none text-white/90">{displayName}</p>
+            <p className="text-xs leading-none text-white/70">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-neutral-800" />
         <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
+          <DropdownMenuItem asChild className="hover:bg-neutral-800 focus:bg-neutral-800 text-white/90 hover:text-lime-300">
             <Link to="/profile">
               <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
+        <DropdownMenuSeparator className="bg-neutral-800" />
+        <DropdownMenuItem asChild className="hover:bg-neutral-800 focus:bg-neutral-800">
           <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>

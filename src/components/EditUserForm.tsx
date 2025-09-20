@@ -25,7 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon } from 'lucide-react';
-import { useSession } from '@/components/SessionContextProvider'; // Import useSession
+import { useSession } from '@/components/SessionContextProvider';
 
 const editUserFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }).optional().or(z.literal('')),
@@ -38,7 +38,7 @@ type EditUserFormValues = z.infer<typeof editUserFormSchema>;
 
 interface EditUserFormProps {
   userId: string;
-  initialData: EditUserFormValues & { email: string }; // Include email for display
+  initialData: EditUserFormValues & { email: string };
   onUserUpdated: () => void;
   onClose: () => void;
 }
@@ -47,7 +47,7 @@ const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
 
 const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { profile: currentUserProfile } = useSession(); // Get current user's profile
+  const { profile: currentUserProfile } = useSession();
 
   const form = useForm<EditUserFormValues>({
     resolver: zodResolver(editUserFormSchema),
@@ -76,7 +76,7 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
         first_name: values.first_name || null,
         last_name: values.last_name || null,
         avatar_url: values.avatar_url || null,
-        role: values.role, // Update the role
+        role: values.role,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId);
@@ -86,13 +86,12 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
       showError('Failed to update user profile.');
     } else {
       showSuccess('User profile updated successfully!');
-      onUserUpdated(); // Notify parent component to refresh
-      onClose(); // Close the dialog
+      onUserUpdated();
+      onClose();
     }
     setIsSubmitting(false);
   };
 
-  // Disable role change if editing own account
   const isEditingOwnRole = userId === currentUserProfile?.id;
 
   return (
@@ -101,11 +100,11 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
         <div className="flex flex-col items-center gap-4">
           <Avatar className="h-24 w-24">
             <AvatarImage src={initialData.avatar_url || undefined} alt={`${initialData.first_name} ${initialData.last_name}`} />
-            <AvatarFallback>
-              <UserIcon className="h-12 w-12 text-gray-400" />
+            <AvatarFallback className="bg-neutral-700 text-white/70">
+              <UserIcon className="h-12 w-12 text-white/50" />
             </AvatarFallback>
           </Avatar>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-white/70">
             {initialData.email}
           </p>
         </div>
@@ -114,11 +113,11 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
           name="first_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First Name</FormLabel>
+              <FormLabel className="text-white/70">First Name</FormLabel>
               <FormControl>
-                <Input placeholder="User's first name" {...field} />
+                <Input placeholder="User's first name" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -127,11 +126,11 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
           name="last_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Last Name</FormLabel>
+              <FormLabel className="text-white/70">Last Name</FormLabel>
               <FormControl>
-                <Input placeholder="User's last name" {...field} />
+                <Input placeholder="User's last name" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -140,11 +139,11 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
           name="avatar_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Avatar URL</FormLabel>
+              <FormLabel className="text-white/70">Avatar URL</FormLabel>
               <FormControl>
-                <Input placeholder="URL to user's avatar image" {...field} />
+                <Input placeholder="URL to user's avatar image" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -153,26 +152,26 @@ const EditUserForm = ({ userId, initialData, onUserUpdated, onClose }: EditUserF
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Role</FormLabel>
+              <FormLabel className="text-white/70">Role</FormLabel>
               <Select onValueChange={field.onChange} value={field.value} disabled={isEditingOwnRole}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {USER_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
+                    <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {role.charAt(0).toUpperCase() + role.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : 'Update User Profile'}
         </Button>
       </form>

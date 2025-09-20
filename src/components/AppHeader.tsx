@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
 ];
 
 const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <Link to={to} className={cn("text-sm font-medium transition-colors hover:text-primary", className)} onClick={onClick}>
+  <Link to={to} className={cn("text-sm font-medium transition-colors hover:text-lime-300", className)} onClick={onClick}>
     {children}
   </Link>
 );
@@ -48,28 +48,28 @@ const AppHeader = () => {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background md:hidden">
+    <header className="sticky top-0 z-40 w-full border-b border-neutral-800 bg-neutral-900 md:hidden">
       <div className="container flex h-16 items-center justify-between py-4">
-        <Link to="/" className="text-lg font-bold text-primary">
+        <Link to="/" className="text-lg font-bold text-lime-300 drop-shadow-[0_0_20px_rgba(132,204,22,0.35)]">
           ProjectFlow
         </Link>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white/70 hover:text-lime-300">
             {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             <span className="sr-only">Toggle theme</span>
           </Button>
           {session && <UserNav />}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="bg-neutral-800 text-white/70 hover:bg-neutral-700 hover:text-lime-300 border-neutral-700">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right">
+            <SheetContent side="right" className="bg-neutral-900 border-neutral-800 text-white/90">
               <nav className="flex flex-col gap-4 pt-6">
                 {filteredNavItems.map((item) => (
-                  <NavLink key={item.to} to={item.to} className="text-lg">
+                  <NavLink key={item.to} to={item.to} className="text-lg text-white/90 hover:text-lime-300">
                     <item.icon className="mr-2 h-5 w-5 inline-block" />
                     {item.label}
                   </NavLink>

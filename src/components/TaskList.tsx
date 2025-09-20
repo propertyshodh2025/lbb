@@ -65,9 +65,9 @@ interface TaskListProps {
   refreshTrigger?: boolean;
   filterByAssignedTo?: string | null;
   filterByProjectId?: string | null;
-  filterByStatus?: string | null; // New filter prop
-  sortBy?: string; // New sort prop
-  sortOrder?: 'asc' | 'desc'; // New sort prop
+  filterByStatus?: string | null;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   onTaskUpdated?: () => void;
 }
 
@@ -77,9 +77,9 @@ const TaskList = ({
   refreshTrigger,
   filterByAssignedTo = null,
   filterByProjectId = null,
-  filterByStatus = null, // Default to null
-  sortBy = 'created_at', // Default sort by created_at
-  sortOrder = 'desc', // Default sort order
+  filterByStatus = null,
+  sortBy = 'created_at',
+  sortOrder = 'desc',
   onTaskUpdated
 }: TaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -180,7 +180,7 @@ const TaskList = ({
       .channel('public:tasks')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, payload => {
         console.log('Task change received!', payload);
-        fetchTasksAndEditors(); // Re-fetch tasks on any change
+        fetchTasksAndEditors();
       })
       .subscribe();
 
@@ -213,7 +213,6 @@ const TaskList = ({
       console.error('Error updating task status:', error);
       showError('Failed to update task status.');
     } else {
-      // Insert into task_status_history
       const { error: historyError } = await supabase.from('task_status_history').insert({
         task_id: taskId,
         status: newStatus,
@@ -237,9 +236,12 @@ const TaskList = ({
     }
 
     const assignedToUuid = newAssignedTo === '' ? null : newAssignedTo;
-    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received'; // Update status based on assignment
+    const newStatus = assignedToUuid ? 'Assigned' : 'Raw files received';
 
-    if (assignedToUuid === task.assigned_to && newStatus === task.status) return;
+    const taskToUpdate = tasks.find(t => t.id === taskId);
+    if (!taskToUpdate) return;
+
+    if (assignedToUuid === taskToUpdate.assigned_to && newStatus === taskToUpdate.status) return;
 
     const { error } = await supabase
       .from('tasks')
@@ -250,7 +252,6 @@ const TaskList = ({
       console.error('Error updating task assignment:', error);
       showError('Failed to update task assignment.');
     } else {
-      // Insert into task_status_history
       const { error: historyError } = await supabase.from('task_status_history').insert({
         task_id: taskId,
         status: newStatus,
@@ -282,7 +283,6 @@ const TaskList = ({
       console.error('Error deleting task:', error);
       showError(`Failed to delete task "${taskTitle}".`);
     } else {
-      // Delete associated history entries
       const { error: historyDeleteError } = await supabase
         .from('task_status_history')
         .delete()
@@ -310,32 +310,32 @@ const TaskList = ({
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
       </div>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400">No tasks found matching the criteria.</p>
+      <p className="text-center text-white/70">No tasks found matching the criteria.</p>
     );
   }
 
   return (
     <div className="space-y-4">
       {tasks.map((task) => (
-        <Card key={task.id} className="shadow-sm dark:bg-gray-800">
+        <Card key={task.id} className="shadow-sm bg-neutral-900 rounded-2xl glass-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">
-              <Link to={`/tasks/${task.id}`} className="hover:underline text-primary dark:text-primary-foreground">
+            <CardTitle className="text-xl font-semibold text-white/90">
+              <Link to={`/tasks/${task.id}`} className="hover:underline text-lime-300">
                 {task.title}
               </Link>
             </CardTitle>
             <div className="flex items-center gap-2">
               {canEditTaskDetails() && (
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(task)}>
+                <Button variant="outline" size="icon" className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full" onClick={() => handleEditClick(task)}>
                   <Edit className="h-4 w-4" />
                   <span className="sr-only">Edit Task</span>
                 </Button>
@@ -343,22 +343,22 @@ const TaskList = ({
               {canDeleteTask() && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon" className="h-8 w-8">
+                    <Button variant="destructive" size="icon" className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full">
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete Task</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/70">
                         This action cannot be undone. This will permanently delete the task
                         "{task.title}".
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteTask(task.id, task.title)} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -368,22 +368,22 @@ const TaskList = ({
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-white/70">
               Project: {task.projects?.title || 'N/A'}
             </p>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Status:</p>
+              <p className="text-sm text-white/70">Status:</p>
               <Select
                 value={task.status}
                 onValueChange={(value) => handleStatusChange(task.id, value, task.assigned_to)}
                 disabled={!canEditTask(task)}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {TASK_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
+                    <SelectItem key={status} value={status} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {status}
                     </SelectItem>
                   ))}
@@ -392,29 +392,29 @@ const TaskList = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Assigned To:</p>
+              <p className="text-sm text-white/70">Assigned To:</p>
               <Select
                 value={task.assigned_to || ''}
                 onValueChange={(value) => handleAssignmentChange(task.id, value, task.status)}
                 disabled={!canReassignTask()}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                   <SelectValue placeholder="Select editor" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                  <SelectItem value="" className="hover:bg-neutral-800 focus:bg-neutral-800">Unassigned</SelectItem>
                   {editors.map((editor) => (
-                    <SelectItem key={editor.id} value={editor.id}>
+                    <SelectItem key={editor.id} value={editor.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {editor.first_name} {editor.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-white/70">
               Created: {new Date(task.created_at).toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-white/70">
               Last Updated: {new Date(task.updated_at).toLocaleString()}
             </p>
           </CardContent>
@@ -423,10 +423,10 @@ const TaskList = ({
 
       {currentTaskToEdit && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
             <DialogHeader>
-              <DialogTitle>Edit Task</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-white/90">Edit Task</DialogTitle>
+              <DialogDescription className="text-white/70">
                 Make changes to the task details here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
@@ -436,7 +436,7 @@ const TaskList = ({
                 title: currentTaskToEdit.title,
                 project_id: currentTaskToEdit.project_id || '',
                 assigned_to: currentTaskToEdit.assigned_to || '',
-                currentStatus: currentTaskToEdit.status, // Pass current status
+                currentStatus: currentTaskToEdit.status,
               }}
               onTaskUpdated={handleTaskDetailsUpdated}
               onClose={() => setIsEditDialogOpen(false)}

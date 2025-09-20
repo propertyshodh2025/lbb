@@ -37,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import EditTaskForm from '@/components/EditTaskForm';
+import { Input } from '@/components/ui/input'; // Import Input for file upload
 
 interface Task {
   id: string;
@@ -55,7 +56,7 @@ interface Task {
     last_name: string;
     role: string;
   } | null;
-  attachments: string[]; // New attachments field
+  attachments: string[];
 }
 
 interface Editor {
@@ -163,7 +164,7 @@ const TaskDetailsPage = () => {
       .channel(`task_details:${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `id=eq.${id}` }, payload => {
         console.log('Task details change received!', payload);
-        fetchTaskDetailsAndEditors(); // Re-fetch task details on any change
+        fetchTaskDetailsAndEditors();
       })
       .subscribe();
 
@@ -295,7 +296,7 @@ const TaskDetailsPage = () => {
       for (const file of Array.from(files)) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${task.id}/${fileName}`; // Store attachments under task ID
+        const filePath = `${task.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('task_attachments')
@@ -324,7 +325,7 @@ const TaskDetailsPage = () => {
       }
 
       showSuccess('Attachments uploaded successfully!');
-      fetchTaskDetailsAndEditors(); // Re-fetch to update UI
+      fetchTaskDetailsAndEditors();
     } catch (error: any) {
       console.error('Error uploading attachments:', error.message);
       showError(`Failed to upload attachments: ${error.message}`);
@@ -338,16 +339,16 @@ const TaskDetailsPage = () => {
 
   if (isLoading || isSessionLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-4xl dark:bg-gray-800">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+        <Card className="w-full max-w-4xl bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-8 w-3/4 mb-2 bg-neutral-700" />
+            <Skeleton className="h-4 w-1/2 bg-neutral-700" />
           </CardHeader>
           <CardContent className="space-y-4">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-6 w-full bg-neutral-700" />
+            <Skeleton className="h-6 w-full bg-neutral-700" />
+            <Skeleton className="h-20 w-full bg-neutral-700" />
           </CardContent>
         </Card>
       </div>
@@ -356,14 +357,14 @@ const TaskDetailsPage = () => {
 
   if (!task) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md text-center dark:bg-gray-800">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+        <Card className="w-full max-w-md text-center bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">Task Not Found</CardTitle>
+            <CardTitle className="text-2xl font-bold text-destructive-foreground">Task Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 dark:text-gray-300">The task you are looking for does not exist or you do not have access.</p>
-            <Button asChild className="mt-4">
+            <p className="text-white/70">The task you are looking for does not exist or you do not have access.</p>
+            <Button asChild className="mt-4 rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
               <Link to={profile?.role === 'editor' ? '/editor' : '/manager'}>Back to Tasks</Link>
             </Button>
           </CardContent>
@@ -380,31 +381,31 @@ const TaskDetailsPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
+    <div className="flex flex-col items-center min-h-screen p-4 bg-neutral-950">
+      <Card className="w-full max-w-4xl shadow-lg mt-8 mb-8 bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" asChild>
-              <Link to={profile?.role === 'editor' ? '/editor' : '/manager'} className="flex items-center text-primary hover:underline">
+            <Button variant="ghost" asChild className="text-lime-300 hover:text-lime-400">
+              <Link to={profile?.role === 'editor' ? '/editor' : '/manager'} className="flex items-center">
                 <ArrowLeft className="h-4 w-4 mr-2" /> Back to Tasks
               </Link>
             </Button>
-            <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white text-center flex-grow">
+            <CardTitle className="text-3xl font-bold text-white/90 text-center flex-grow">
               {task.title}
             </CardTitle>
             <div className="flex items-center gap-2">
               {canEditTaskDetails(task) && (
                 <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" className="bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700">
                       <Edit className="h-4 w-4" />
                       <span className="sr-only">Edit Task</span>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
+                  <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                     <DialogHeader>
-                      <DialogTitle>Edit Task</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="text-white/90">Edit Task</DialogTitle>
+                      <DialogDescription className="text-white/70">
                         Make changes to the task details here. Click save when you're done.
                       </DialogDescription>
                     </DialogHeader>
@@ -420,22 +421,22 @@ const TaskDetailsPage = () => {
               {canDeleteTask() && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon">
+                    <Button variant="destructive" size="icon" className="bg-destructive text-destructive-foreground hover:bg-destructive/90 border-destructive">
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete Task</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/70">
                         This action cannot be undone. This will permanently delete the task
                         "{task.title}".
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteTask} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteTask} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -444,25 +445,25 @@ const TaskDetailsPage = () => {
               )}
             </div>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
+          <p className="text-lg text-white/70 text-center">
             Project: {task.projects?.title || 'N/A'}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200">Current Status:</h4>
+            <h4 className="text-md font-semibold text-white/90">Current Status:</h4>
             <div className="flex items-center gap-2">
               <Select
                 value={task.status}
                 onValueChange={handleStatusChange}
                 disabled={!canEditTaskStatus(task) || isUpdating}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px] bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {TASK_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>
+                    <SelectItem key={status} value={status} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {status}
                     </SelectItem>
                   ))}
@@ -472,20 +473,20 @@ const TaskDetailsPage = () => {
           </div>
 
           <div>
-            <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200">Assigned To:</h4>
+            <h4 className="text-md font-semibold text-white/90">Assigned To:</h4>
             <div className="flex items-center gap-2">
               <Select
                 value={task.assigned_to || ''}
                 onValueChange={handleAssignmentChange}
                 disabled={!canReassignTask() || isUpdating}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px] bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                   <SelectValue placeholder="Select editor" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                  <SelectItem value="" className="hover:bg-neutral-800 focus:bg-neutral-800">Unassigned</SelectItem>
                   {editors.map((editor) => (
-                    <SelectItem key={editor.id} value={editor.id}>
+                    <SelectItem key={editor.id} value={editor.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {editor.first_name} {editor.last_name}
                     </SelectItem>
                   ))}
@@ -494,26 +495,29 @@ const TaskDetailsPage = () => {
             </div>
           </div>
 
-          <div className="border-t pt-6 mt-6 dark:border-gray-700">
-            <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200">Task Dates:</h4>
-            <p className="text-gray-700 dark:text-gray-300">
+          <div className="border-t pt-6 mt-6 border-neutral-800">
+            <h4 className="text-md font-semibold text-white/90">Task Dates:</h4>
+            <p className="text-white/70">
               Created: {format(new Date(task.created_at), 'PPP HH:mm')}
             </p>
-            <p className="text-gray-700 dark:text-gray-300">
+            <p className="text-white/70">
               Last Updated: {format(new Date(task.updated_at), 'PPP HH:mm')}
             </p>
           </div>
 
-          <div className="border-t pt-6 mt-6 dark:border-gray-700">
-            <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200 mb-3">Attachments:</h4>
+          <div className="border-t pt-6 mt-6 border-neutral-800">
+            <h4 className="text-md font-semibold text-white/90 mb-3">Attachments:</h4>
             {task.attachments && task.attachments.length > 0 ? (
               <div className="space-y-2">
                 {task.attachments.map((url, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-gray-50 dark:bg-gray-700">
-                    <span className="text-sm text-gray-700 dark:text-gray-200 truncate">
-                      {url.substring(url.lastIndexOf('/') + 1)}
-                    </span>
-                    <Button variant="ghost" size="icon" asChild>
+                  <div key={index} className="flex items-center justify-between p-2 border border-neutral-700 rounded-md bg-neutral-800">
+                    <div className="flex items-center">
+                      <Paperclip className="h-4 w-4 mr-2 text-white/70" />
+                      <span className="text-sm text-white/90 truncate">
+                        {url.substring(url.lastIndexOf('/') + 1)}
+                      </span>
+                    </div>
+                    <Button variant="ghost" size="icon" asChild className="text-lime-300 hover:text-lime-400">
                       <a href={url} target="_blank" rel="noopener noreferrer" download>
                         <Download className="h-4 w-4" />
                         <span className="sr-only">Download attachment</span>
@@ -523,7 +527,7 @@ const TaskDetailsPage = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">No attachments.</p>
+              <p className="text-white/70 text-sm">No attachments.</p>
             )}
             {canAddAttachments(task) && (
               <div className="mt-4">
@@ -533,13 +537,14 @@ const TaskDetailsPage = () => {
                   onChange={handleAttachmentUpload}
                   disabled={isUploadingAttachment}
                   ref={fileInputRef}
+                  className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAttachment}
-                  className="mt-2 w-full"
+                  className="mt-2 w-full rounded-full bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700"
                 >
                   {isUploadingAttachment ? (
                     <>

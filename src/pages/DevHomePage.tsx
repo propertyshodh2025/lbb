@@ -34,30 +34,30 @@ const DevHomePage = ({ onSelectRole }: DevHomePageProps) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-md shadow-lg dark:bg-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
+      <Card className="w-full max-w-md shadow-lg bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Dev Mode: Select Role</CardTitle>
-          <CardDescription className="text-lg text-gray-600 dark:text-gray-400">
+          <CardTitle className="text-3xl font-bold text-white/90">Dev Mode: Select Role</CardTitle>
+          <CardDescription className="text-lg text-white/70">
             Quickly access dashboards for development.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button className="w-full" onClick={() => handleRoleSelect('admin')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('admin')}>
             Login as Admin
           </Button>
-          <Button className="w-full" onClick={() => handleRoleSelect('manager')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('manager')}>
             Login as Manager
           </Button>
-          <Button className="w-full" onClick={() => handleRoleSelect('editor')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('editor')}>
             Login as Editor
           </Button>
-          <Button className="w-full" onClick={() => handleRoleSelect('client')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('client')}>
             Login as Client
           </Button>
           <div className="pt-4 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Or <a href="/login" className="text-blue-500 hover:underline">use actual login</a>
+            <p className="text-sm text-white/70">
+              Or <a href="/login" className="text-lime-300 hover:underline">use actual login</a>
             </p>
           </div>
         </CardContent>

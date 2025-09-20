@@ -3,7 +3,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import ClientTaskCard from './ClientTaskCard'; // Import the new ClientTaskCard
+import ClientTaskCard from './ClientTaskCard';
 
 interface TaskWithHistory {
   id: string;
@@ -14,7 +14,7 @@ interface TaskWithHistory {
   due_date: string | null;
   attachments: string[];
   projects: { title: string } | null;
-  profiles: { // For assigned editor
+  profiles: {
     first_name: string;
     last_name: string;
   } | null;
@@ -36,19 +36,19 @@ const ClientKanbanBoard = ({ tasks }: ClientKanbanBoardProps) => {
       id: 'raw-files-received',
       title: 'Raw Files Received',
       statusMap: ['Raw files received', 'Unassigned'],
-      color: 'bg-gray-50 dark:bg-gray-800',
+      color: 'bg-neutral-900',
     },
     {
       id: 'in-progress',
       title: 'In Progress',
       statusMap: ['Assigned', 'In Progress', 'Under Review'],
-      color: 'bg-blue-50 dark:bg-blue-950',
+      color: 'bg-neutral-900',
     },
     {
       id: 'completed',
       title: 'Completed',
       statusMap: ['Completed'],
-      color: 'bg-green-50 dark:bg-green-950',
+      color: 'bg-neutral-900',
     },
   ];
 
@@ -59,13 +59,13 @@ const ClientKanbanBoard = ({ tasks }: ClientKanbanBoardProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
       {columns.map((column) => (
-        <Card key={column.id} className={`flex-1 min-w-[280px] max-w-[350px] ${column.color} flex flex-col`}>
+        <Card key={column.id} className={`flex-1 min-w-[280px] max-w-[350px] ${column.color} flex flex-col rounded-2xl glass-border`}>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <CardTitle className="text-sm font-medium text-white/90">
                 {column.title}
               </CardTitle>
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 bg-lime-400 text-black">
                 {getTasksForColumn(column.statusMap).length}
               </Badge>
             </div>
@@ -76,7 +76,7 @@ const ClientKanbanBoard = ({ tasks }: ClientKanbanBoardProps) => {
                 <ClientTaskCard key={task.id} task={task} />
               ))}
               {getTasksForColumn(column.statusMap).length === 0 && (
-                <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
+                <div className="flex items-center justify-center h-24 text-white/70 text-sm">
                   No tasks
                 </div>
               )}

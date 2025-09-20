@@ -33,7 +33,7 @@ const UpdateProjectStatusForm = ({ projectId, currentStatus, onStatusUpdated }: 
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
-    if (newStatus === currentStatus) return; // No change, do nothing
+    if (newStatus === currentStatus) return;
 
     setIsUpdating(true);
     const { error: projectUpdateError } = await supabase
@@ -48,7 +48,6 @@ const UpdateProjectStatusForm = ({ projectId, currentStatus, onStatusUpdated }: 
       return;
     }
 
-    // Insert into project_status_history
     const { error: historyInsertError } = await supabase
       .from('project_status_history')
       .insert({ project_id: projectId, status: newStatus });
@@ -56,31 +55,29 @@ const UpdateProjectStatusForm = ({ projectId, currentStatus, onStatusUpdated }: 
     if (historyInsertError) {
       console.error('Error logging project status history:', historyInsertError);
       showError('Failed to log status history.');
-      // Even if history fails, project status is updated, so we proceed
     }
 
     showSuccess('Project status updated successfully!');
     setIsUpdating(false);
-    onStatusUpdated(); // Notify parent to refresh
+    onStatusUpdated();
   };
 
-  // Only admins and managers can update project status
   const canUpdateStatus = !isSessionLoading && (profile?.role === 'admin' || profile?.role === 'manager');
 
   return (
     <div className="flex items-center gap-2">
-      <p className="text-sm text-gray-600 dark:text-gray-400">Update Status:</p>
+      <p className="text-sm text-white/70">Update Status:</p>
       <Select
         value={currentStatus}
         onValueChange={handleStatusChange}
         disabled={!canUpdateStatus || isUpdating}
       >
-        <SelectTrigger className="w-[200px]">
+        <SelectTrigger className="w-[200px] bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
           <SelectValue placeholder="Select new status" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
           {PROJECT_STATUSES.map((status) => (
-            <SelectItem key={status} value={status}>
+            <SelectItem key={status} value={status} className="hover:bg-neutral-800 focus:bg-neutral-800">
               {status}
             </SelectItem>
           ))}

@@ -30,7 +30,7 @@ interface TimelineTrackerProps {
 
 const getStatusIcon = (status: string, isActive: boolean = false) => {
   const baseClasses = "w-5 h-5";
-  const activeClasses = isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500";
+  const activeClasses = isActive ? "text-lime-400" : "text-white/70";
 
   switch (status) {
     case 'Raw files received':
@@ -60,13 +60,13 @@ const getStatusLabel = (status: string) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'Raw files received': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 'Unassigned': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
-    case 'Assigned': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    case 'In Progress': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
-    case 'Under Review': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-    case 'Completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    case 'Raw files received': return 'bg-lime-950 text-lime-400';
+    case 'Unassigned': return 'bg-neutral-700 text-white/70';
+    case 'Assigned': return 'bg-yellow-900 text-yellow-400';
+    case 'In Progress': return 'bg-orange-900 text-orange-400';
+    case 'Under Review': return 'bg-purple-900 text-purple-400';
+    case 'Completed': return 'bg-green-900 text-green-400';
+    default: return 'bg-neutral-700 text-white/70';
   }
 };
 
@@ -82,13 +82,13 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
   return (
     <div className="space-y-6">
       {tasks.length === 0 && (
-        <Card>
+        <Card className="bg-neutral-900 rounded-2xl glass-border">
           <CardContent className="py-12 text-center">
-            <Package className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <Package className="w-12 h-12 text-white/70 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white/90 mb-2">
               No tasks yet
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-white/70">
               Your video editing tasks will appear here once they're created.
             </p>
           </CardContent>
@@ -99,13 +99,13 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
         const currentStatusIndex = orderedStatuses.indexOf(task.status);
 
         return (
-          <Card key={task.id} className="overflow-hidden shadow-sm dark:bg-gray-800">
+          <Card key={task.id} className="overflow-hidden shadow-sm bg-neutral-900 rounded-2xl glass-border">
             <CardHeader className="pb-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg text-gray-900 dark:text-white">{task.title}</CardTitle>
+                  <CardTitle className="text-lg text-white/90">{task.title}</CardTitle>
                   {task.projects && (
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Project: {task.projects.title}</p>
+                    <p className="text-white/70 text-sm mt-1">Project: {task.projects.title}</p>
                   )}
                 </div>
                 <Badge className={getStatusColor(task.status)}>
@@ -117,7 +117,7 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
             <CardContent>
               <div className="relative">
                 {/* Progress Line */}
-                <div className="absolute left-4 top-4 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700" />
+                <div className="absolute left-4 top-4 bottom-0 w-0.5 bg-neutral-700" />
 
                 {/* Steps */}
                 <div className="space-y-6">
@@ -131,11 +131,11 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
                         {/* Step Icon */}
                         <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
                           isCompleted || isActive
-                            ? 'border-blue-600 bg-blue-600 dark:border-blue-400 dark:bg-blue-400'
-                            : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-900'
+                            ? 'border-lime-400 bg-lime-400'
+                            : 'border-neutral-700 bg-neutral-900'
                         }`}>
                           {isCompleted ? (
-                            <CheckCircle className="w-4 h-4 text-white" />
+                            <CheckCircle className="w-4 h-4 text-black" />
                           ) : (
                             getStatusIcon(statusStep, isActive)
                           )}
@@ -145,24 +145,24 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
                         <div className="ml-4 flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <p className={`text-sm font-medium ${
-                              isCompleted || isActive ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'
+                              isCompleted || isActive ? 'text-white/90' : 'text-white/70'
                             }`}>
                               {getStatusLabel(statusStep)}
                             </p>
                             {historyEntry?.timestamp && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                              <p className="text-xs text-white/70">
                                 {format(new Date(historyEntry.timestamp), 'MMM dd, yyyy HH:mm')}
                               </p>
                             )}
                           </div>
 
                           {isActive && (
-                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            <p className="text-xs text-lime-400 mt-1">
                               Currently in progress
                             </p>
                           )}
                           {historyEntry?.notes && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-white/70 mt-1">
                               {historyEntry.notes}
                             </p>
                           )}
@@ -174,18 +174,18 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
               </div>
 
               {/* Task Details */}
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-6 pt-4 border-t border-neutral-800">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Created</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="text-white/70">Created</p>
+                    <p className="font-medium text-white/90">
                       {format(new Date(task.created_at), 'MMM dd, yyyy')}
                     </p>
                   </div>
                   {task.due_date && (
                     <div>
-                      <p className="text-gray-600 dark:text-gray-400">Due Date</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                      <p className="text-white/70">Due Date</p>
+                      <p className="font-medium text-white/90">
                         {format(new Date(task.due_date), 'MMM dd, yyyy')}
                       </p>
                     </div>
@@ -194,8 +194,8 @@ const TimelineTracker = ({ tasks }: TimelineTrackerProps) => {
 
                 {task.description && (
                   <div className="mt-4">
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">Description</p>
-                    <p className="text-sm mt-1 text-gray-900 dark:text-white">{task.description}</p>
+                    <p className="text-white/70 text-sm">Description</p>
+                    <p className="text-sm mt-1 text-white/90">{task.description}</p>
                   </div>
                 )}
               </div>

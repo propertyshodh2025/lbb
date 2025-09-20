@@ -129,14 +129,14 @@ const ManagerDashboard = () => {
       title: 'Unassigned Tasks',
       statusMap: ['Raw files received', 'Unassigned'],
       assignedToId: null, // Explicitly null for unassigned
-      color: 'bg-red-50 dark:bg-red-950', // Highlighted color for unassigned tasks
+      color: 'bg-neutral-800 border-lime-400/30 border-2', // Highlighted color for unassigned tasks
     },
     ...editors.map(editor => ({
       id: editor.id, // Use editor ID as column ID
       title: `${editor.first_name} ${editor.last_name}`,
       statusMap: ['Assigned', 'In Progress', 'Under Review', 'Completed'], // All statuses for an assigned task
       assignedToId: editor.id,
-      color: 'bg-yellow-50 dark:bg-yellow-950', // Example color for editor columns
+      color: 'bg-neutral-900', // Example color for editor columns
     })),
   ];
 
@@ -148,19 +148,19 @@ const ManagerDashboard = () => {
 
   if (isSessionLoading || isTasksLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-6xl dark:bg-gray-800">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+        <Card className="w-full max-w-6xl bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-8 w-3/4 mb-2 bg-neutral-700" />
+            <Skeleton className="h-4 w-1/2 bg-neutral-700" />
           </CardHeader>
           <CardContent className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full bg-neutral-700" />
+            <Skeleton className="h-20 w-full bg-neutral-700" />
             <div className="flex gap-4 overflow-hidden">
-              <Skeleton className="h-64 w-1/3" />
-              <Skeleton className="h-64 w-1/3" />
-              <Skeleton className="h-64 w-1/3" />
+              <Skeleton className="h-64 w-1/3 bg-neutral-700" />
+              <Skeleton className="h-64 w-1/3 bg-neutral-700" />
+              <Skeleton className="h-64 w-1/3 bg-neutral-700" />
             </div>
           </CardContent>
         </Card>
@@ -170,13 +170,13 @@ const ManagerDashboard = () => {
 
   if (profile?.role !== 'manager' && profile?.role !== 'admin') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md text-center dark:bg-gray-800">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+        <Card className="w-full max-w-md text-center bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">Access Denied</CardTitle>
+            <CardTitle className="text-2xl font-bold text-destructive-foreground">Access Denied</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-700 dark:text-gray-300">You do not have manager privileges to view this page.</p>
+            <p className="text-white/70">You do not have manager privileges to view this page.</p>
           </CardContent>
         </Card>
       </div>
@@ -184,63 +184,63 @@ const ManagerDashboard = () => {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-6xl shadow-lg mt-8 mb-8 dark:bg-gray-800">
+    <div className="flex flex-col items-center min-h-screen p-4 bg-neutral-950">
+      <Card className="w-full max-w-6xl shadow-lg mt-8 mb-8 bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Manager Dashboard</CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Oversee projects and tasks, and assign work to editors.</p>
+          <CardTitle className="text-3xl font-bold text-white/90">Manager Dashboard</CardTitle>
+          <p className="text-lg text-white/70">Oversee projects and tasks, and assign work to editors.</p>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
+          <p className="text-white/70 mb-6">
             Welcome, {profile?.first_name || 'Manager'}! Here you can manage projects and tasks.
           </p>
 
           {/* Summary Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="dark:bg-gray-900">
+            <Card className="bg-neutral-900 rounded-2xl glass-border">
               <CardContent className="p-6 flex items-center">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                  <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-lime-950 rounded-lg">
+                  <Package className="w-6 h-6 text-lime-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalTasks}</p>
+                  <p className="text-sm font-medium text-white/70">Total Tasks</p>
+                  <p className="text-2xl font-bold text-white/90">{totalTasks}</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="dark:bg-gray-900">
+            <Card className="bg-neutral-900 rounded-2xl glass-border">
               <CardContent className="p-6 flex items-center">
-                <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                  <Clock className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="p-2 bg-red-900 rounded-lg">
+                  <Clock className="w-6 h-6 text-red-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Unassigned Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{unassignedTasksCount}</p>
+                  <p className="text-sm font-medium text-white/70">Unassigned Tasks</p>
+                  <p className="text-2xl font-bold text-white/90">{unassignedTasksCount}</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="dark:bg-gray-900">
+            <Card className="bg-neutral-900 rounded-2xl glass-border">
               <CardContent className="p-6 flex items-center">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                  <ListChecks className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 bg-orange-900 rounded-lg">
+                  <ListChecks className="w-6 h-6 text-orange-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeTasksCount}</p>
+                  <p className="text-sm font-medium text-white/70">Active Tasks</p>
+                  <p className="text-2xl font-bold text-white/90">{activeTasksCount}</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="dark:bg-gray-900">
+            <Card className="bg-neutral-900 rounded-2xl glass-border">
               <CardContent className="p-6 flex items-center">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="p-2 bg-green-900 rounded-lg">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{completedTasksCount}</p>
+                  <p className="text-sm font-medium text-white/70">Completed Tasks</p>
+                  <p className="text-2xl font-bold text-white/90">{completedTasksCount}</p>
                 </div>
               </CardContent>
             </Card>
@@ -249,35 +249,35 @@ const ManagerDashboard = () => {
           <div className="flex justify-end mb-4 gap-2">
             <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
                   <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                 <DialogHeader>
-                  <DialogTitle>Add New Task</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-white/90">Add New Task</DialogTitle>
+                  <DialogDescription className="text-white/70">
                     Fill in the details to create a new task.
                   </DialogDescription>
                 </DialogHeader>
                 <AddTaskForm onTaskAdded={handleTaskChange} />
               </DialogContent>
             </Dialog>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="rounded-full bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700">
               <Link to="/tasks">
                 <ListChecks className="mr-2 h-4 w-4" /> View All Tasks
               </Link>
             </Button>
           </div>
 
-          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Task Kanban Board</h3>
+          <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
+            <h3 className="text-xl font-semibold mb-4 text-white/90">Task Kanban Board</h3>
             <KanbanBoard initialTasks={tasks} columns={kanbanColumns} onTaskMove={handleTaskChange} />
           </div>
 
-          <div className="p-6 border rounded-lg bg-gray-50 dark:bg-gray-900">
-            <h3 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Project Overview</h3>
-            <Button asChild variant="outline" className="w-full">
+          <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
+            <h3 className="text-xl font-semibold mb-4 text-white/90">Project Overview</h3>
+            <Button asChild variant="outline" className="w-full rounded-full bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700">
               <Link to="/projects">
                 <Briefcase className="mr-2 h-4 w-4" /> View All Projects
               </Link>

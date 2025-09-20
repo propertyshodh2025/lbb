@@ -48,23 +48,23 @@ const ProjectStatusHistory = ({ projectId }: ProjectStatusHistoryProps) => {
   if (isLoading) {
     return (
       <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full bg-neutral-700" />
+        <Skeleton className="h-10 w-full bg-neutral-700" />
       </div>
     );
   }
 
   if (history.length === 0) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400">No status history available.</p>
+      <p className="text-center text-white/70">No status history available.</p>
     );
   }
 
   return (
     <div className="space-y-2">
-      <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200">Status History:</h4>
+      <h4 className="text-md font-semibold text-white/90">Status History:</h4>
       {history.map((entry) => (
-        <div key={entry.id} className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+        <div key={entry.id} className="flex justify-between items-center text-sm text-white/70">
           <span className="font-medium capitalize">{entry.status}</span>
           <span>{format(new Date(entry.timestamp), 'MMM dd, yyyy HH:mm')}</span>
         </div>

@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, UploadCloud, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const profileFormSchema = z.object({
   first_name: z.string().min(1, { message: 'First name is required.' }),
@@ -40,12 +40,12 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 interface ProfileFormProps {
-  isInitialProfileSetup?: boolean; // New prop to indicate initial setup
+  isInitialProfileSetup?: boolean;
 }
 
 const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
   const { user, profile, isLoading: isSessionLoading } = useSession();
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [isProfileSubmitting, setIsProfileSubmitting] = useState(false);
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -85,14 +85,13 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
     setIsProfileSubmitting(true);
 
     if (isInitialProfileSetup) {
-      // If it's initial setup, insert a new profile
       const { error } = await supabase
         .from('profiles')
         .insert({
           id: user.id,
           first_name: values.first_name,
           last_name: values.last_name,
-          role: 'client', // Default role for new sign-ups
+          role: 'client',
         });
 
       if (error) {
@@ -100,10 +99,9 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
         showError('Failed to create profile.');
       } else {
         showSuccess('Profile created successfully!');
-        navigate('/'); // Redirect to dashboard after initial setup
+        navigate('/');
       }
     } else {
-      // Otherwise, update the existing profile
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -118,7 +116,6 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
         showError('Failed to update profile.');
       } else {
         showSuccess('Profile updated successfully!');
-        // Optionally, trigger a session refresh or re-fetch profile in SessionContextProvider
       }
     }
     setIsProfileSubmitting(false);
@@ -140,7 +137,7 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
       showError(`Failed to update password: ${error.message}`);
     } else {
       showSuccess('Password updated successfully!');
-      passwordForm.reset(); // Clear password fields
+      passwordForm.reset();
     }
     setIsPasswordSubmitting(false);
   };
@@ -159,19 +156,17 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
     const filePath = `${fileName}`;
 
     try {
-      // Upload the file to Supabase storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true, // Overwrite existing file if any
+          upsert: true,
         });
 
       if (uploadError) {
         throw uploadError;
       }
 
-      // Get the public URL of the uploaded file
       const { data: publicUrlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
@@ -180,7 +175,6 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
         throw new Error('Could not get public URL for avatar.');
       }
 
-      // Update the profile table with the new avatar_url
       const { error: updateProfileError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrlData.publicUrl, updated_at: new Date().toISOString() })
@@ -191,15 +185,13 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
       }
 
       showSuccess('Avatar uploaded successfully!');
-      // Trigger a re-fetch of the session/profile to update the UI
-      // This is handled by SessionContextProvider's onAuthStateChange
     } catch (error: any) {
       console.error('Error uploading avatar:', error.message);
       showError(`Failed to upload avatar: ${error.message}`);
     } finally {
       setIsUploadingAvatar(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear the file input
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -207,18 +199,18 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
   if (isSessionLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
-        <Skeleton className="h-6 w-32 mx-auto mb-6" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-24" />
+        <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4 bg-neutral-700" />
+        <Skeleton className="h-6 w-32 mx-auto mb-6 bg-neutral-700" />
+        <Skeleton className="h-10 w-full bg-neutral-700" />
+        <Skeleton className="h-10 w-full bg-neutral-700" />
+        <Skeleton className="h-10 w-full bg-neutral-700" />
+        <Skeleton className="h-10 w-24 bg-neutral-700" />
       </div>
     );
   }
 
   if (!user) {
-    return <p className="text-center text-gray-500 dark:text-gray-400">Please log in to manage your profile.</p>;
+    return <p className="text-center text-white/70">Please log in to manage your profile.</p>;
   }
 
   return (
@@ -229,11 +221,11 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
             <div className="flex flex-col items-center gap-4">
               <Avatar className="h-24 w-24">
                 <AvatarImage src={profile?.avatar_url || undefined} alt={`${profile?.first_name} ${profile?.last_name}`} />
-                <AvatarFallback>
-                  <UserIcon className="h-12 w-12 text-gray-400" />
+                <AvatarFallback className="bg-neutral-700 text-white/70">
+                  <UserIcon className="h-12 w-12 text-white/50" />
                 </AvatarFallback>
               </Avatar>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-white/70">
                 {user.email}
               </p>
               <div className="relative">
@@ -251,7 +243,7 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingAvatar}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-full bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700"
                 >
                   {isUploadingAvatar ? (
                     <>
@@ -271,11 +263,11 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
             name="first_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel className="text-white/70">First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Your first name" {...field} />
+                  <Input placeholder="Your first name" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-destructive-foreground" />
               </FormItem>
             )}
           />
@@ -284,15 +276,15 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
             name="last_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel className="text-white/70">Last Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Your last name" {...field} />
+                  <Input placeholder="Your last name" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-destructive-foreground" />
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={isProfileSubmitting}>
+          <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isProfileSubmitting}>
             {isProfileSubmitting ? 'Saving...' : (isInitialProfileSetup ? 'Complete Profile' : 'Update Profile')}
           </Button>
         </form>
@@ -300,9 +292,9 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
 
       {!isInitialProfileSetup && (
         <>
-          <Separator />
+          <Separator className="bg-neutral-800" />
 
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white">Change Password</h3>
+          <h3 className="text-xl font-bold text-white/90">Change Password</h3>
           <Form {...passwordForm}>
             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6">
               <FormField
@@ -310,11 +302,11 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
                 name="new_password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>New Password</FormLabel>
+                    <FormLabel className="text-white/70">New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Enter new password" {...field} />
+                      <Input type="password" placeholder="Enter new password" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-destructive-foreground" />
                   </FormItem>
                 )}
               />
@@ -323,15 +315,15 @@ const ProfileForm = ({ isInitialProfileSetup = false }: ProfileFormProps) => {
                 name="confirm_password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm New Password</FormLabel>
+                    <FormLabel className="text-white/70">Confirm New Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Confirm new password" {...field} />
+                      <Input type="password" placeholder="Confirm new password" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-destructive-foreground" />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isPasswordSubmitting}>
+              <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isPasswordSubmitting}>
                 {isPasswordSubmitting ? 'Changing Password...' : 'Change Password'}
               </Button>
             </form>

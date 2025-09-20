@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react'; // Import sorting icons
+import { Trash2, Edit, ArrowUpNarrowWide, ArrowDownNarrowWide } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +35,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import EditUserForm from './EditUserForm';
+import { Input } from '@/components/ui/input'; // Import Input for search
 
 interface UserProfile {
   id: string;
@@ -73,7 +74,8 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
 
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState('first_name');
-  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -102,8 +104,14 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
           setUsers([]);
           return;
         }
+
+        const filteredBySearch = result.filter((user: UserProfile) =>
+          (user.first_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (user.last_name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
         
-        setUsers(result || []);
+        setUsers(filteredBySearch || []);
       } catch (error) {
         console.error('Error invoking list-users Edge Function:', error);
         showError('An unexpected error occurred while loading user profiles.');
@@ -114,7 +122,7 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     };
 
     fetchUsers();
-  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, selectedRoleFilter, sortBy, sortOrder]);
+  }, [refreshTrigger, isSessionLoading, session?.access_token, isEditDialogOpen, selectedRoleFilter, sortBy, sortOrder, searchTerm]);
 
   const handleDeleteUser = async (userId: string, userEmail: string) => {
     if (!canDeleteUsers) {
@@ -179,16 +187,16 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full bg-neutral-700" />
+        <Skeleton className="h-20 w-full bg-neutral-700" />
+        <Skeleton className="h-20 w-full bg-neutral-700" />
       </div>
     );
   }
 
   if (users.length === 0) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400">No users found.</p>
+      <p className="text-center text-white/70">No users found.</p>
     );
   }
 
@@ -196,14 +204,21 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="flex-1">
-          <label htmlFor="role-filter" className="sr-only">Filter by Role</label>
+          <Input
+            placeholder="Search users..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
+          />
+        </div>
+        <div className="flex-1">
           <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
-            <SelectTrigger id="role-filter" className="w-full">
+            <SelectTrigger id="role-filter" className="w-full bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
               <SelectValue placeholder="Filter by Role" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
               {USER_ROLES_FILTER.map((role) => (
-                <SelectItem key={role} value={role}>
+                <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
                   {role.charAt(0).toUpperCase() + role.slice(1)}
                 </SelectItem>
               ))}
@@ -211,20 +226,19 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
           </Select>
         </div>
         <div className="flex-1 flex items-center gap-2">
-          <label htmlFor="sort-by" className="sr-only">Sort By</label>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger id="sort-by" className="flex-1">
+            <SelectTrigger id="sort-by" className="flex-1 bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
               {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="hover:bg-neutral-800 focus:bg-neutral-800">
                   {option.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0">
+          <Button variant="outline" size="icon" onClick={toggleSortOrder} className="flex-shrink-0 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full">
             {sortOrder === 'asc' ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
             <span className="sr-only">Toggle sort order</span>
           </Button>
@@ -232,14 +246,14 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
       </div>
 
       {users.map((user) => (
-        <Card key={user.id} className="shadow-sm">
+        <Card key={user.id} className="shadow-sm bg-neutral-900 rounded-2xl glass-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xl font-semibold">
+            <CardTitle className="text-xl font-semibold text-white/90">
               {user.first_name} {user.last_name}
             </CardTitle>
             <div className="flex items-center gap-2">
               {canEditUserDetails && (
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(user)}>
+                <Button variant="outline" size="icon" className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full" onClick={() => handleEditClick(user)}>
                   <Edit className="h-4 w-4" />
                   <span className="sr-only">Edit User Details</span>
                 </Button>
@@ -250,24 +264,24 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
                       disabled={user.id === currentUserProfile?.id || (user.role === 'admin' && users.filter(u => u.role === 'admin').length <= 1)}
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete User</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/70">
                         This action cannot be undone. This will permanently delete the user
                         "{user.first_name} {user.last_name} ({user.email})" and all associated data.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteUser(user.id, user.email)} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -277,9 +291,9 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Role: <span className="font-medium capitalize">{user.role}</span>
+            <p className="text-sm text-white/70">{user.email}</p>
+            <p className="text-sm text-white/70">
+              Role: <span className="font-medium capitalize text-lime-300">{user.role}</span>
             </p>
           </CardContent>
         </Card>
@@ -287,10 +301,10 @@ const UserManagementList = ({ refreshTrigger }: UserManagementListProps) => {
 
       {currentUserToEdit && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
             <DialogHeader>
-              <DialogTitle>Edit User Profile</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-white/90">Edit User Profile</DialogTitle>
+              <DialogDescription className="text-white/70">
                 Make changes to the user's profile details here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>

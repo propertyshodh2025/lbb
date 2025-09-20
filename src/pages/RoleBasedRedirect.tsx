@@ -16,15 +16,12 @@ const RoleBasedRedirect = () => {
         return;
       }
 
-      // Profile check is now handled by ProtectedRoute, so if we reach here, profile should exist.
-      // If for some reason it doesn't, ProtectedRoute would have redirected to /complete-profile.
       if (!profile) {
         console.error("RoleBasedRedirect: Profile is unexpectedly null after ProtectedRoute. This should not happen.");
-        navigate('/complete-profile'); // Fallback, though ProtectedRoute should catch this
+        navigate('/complete-profile');
         return;
       }
 
-      // If profile exists, redirect based on role
       switch (profile.role) {
         case 'admin':
           navigate('/admin');
@@ -40,7 +37,7 @@ const RoleBasedRedirect = () => {
           break;
         default:
           console.warn("Unknown role or profile not fully loaded:", profile?.role);
-          navigate('/complete-profile'); // Fallback for unknown roles
+          navigate('/complete-profile');
           break;
       }
     }
@@ -48,19 +45,19 @@ const RoleBasedRedirect = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-        <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md text-center">
-          <Skeleton className="h-8 w-3/4 mb-4 mx-auto" />
-          <Skeleton className="h-4 w-1/2 mx-auto" />
-          <Skeleton className="h-10 w-full mt-6" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
+        <div className="w-full max-w-md bg-neutral-900 p-8 rounded-2xl shadow-md text-center glass-border">
+          <Skeleton className="h-8 w-3/4 mb-4 mx-auto bg-neutral-700" />
+          <Skeleton className="h-4 w-1/2 mx-auto bg-neutral-700" />
+          <Skeleton className="h-10 w-full mt-6 bg-neutral-700" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <p className="text-lg text-gray-700 dark:text-gray-300">Redirecting to your dashboard...</p>
+    <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
+      <p className="text-lg text-white/70">Redirecting to your dashboard...</p>
     </div>
   );
 };

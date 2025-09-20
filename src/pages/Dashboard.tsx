@@ -11,16 +11,16 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-        <Card className="w-full max-w-2xl">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
+        <Card className="w-full max-w-2xl bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-8 w-3/4 mb-2 bg-neutral-700" />
+            <Skeleton className="h-4 w-1/2 bg-neutral-700" />
           </CardHeader>
           <CardContent className="space-y-4">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-10 w-24 self-end" />
+            <Skeleton className="h-6 w-full bg-neutral-700" />
+            <Skeleton className="h-6 w-full bg-neutral-700" />
+            <Skeleton className="h-10 w-24 self-end bg-neutral-700" />
           </CardContent>
         </Card>
       </div>
@@ -28,10 +28,9 @@ const Dashboard = () => {
   }
 
   if (!user || !profile) {
-    // This case should ideally be handled by ProtectedRoute, but good for fallback
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-        <p className="text-lg text-gray-700 dark:text-gray-300">Not authenticated. Redirecting...</p>
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 p-4">
+        <p className="text-lg text-white/70">Not authenticated. Redirecting...</p>
       </div>
     );
   }
@@ -39,34 +38,34 @@ const Dashboard = () => {
   const displayName = profile.first_name || user.email;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 p-4">
+      <Card className="w-full max-w-2xl shadow-lg bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">
+          <CardTitle className="text-3xl font-bold text-white/90">
             Welcome, {displayName}!
           </CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Your role: <span className="font-semibold capitalize">{profile.role}</span>
+          <p className="text-lg text-white/70">
+            Your role: <span className="font-semibold capitalize text-lime-300">{profile.role}</span>
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {profile.role === 'admin' && (
-            <div className="text-center p-4 bg-blue-50 dark:bg-blue-900 rounded-md">
-              <p className="text-blue-800 dark:text-blue-200">
+            <div className="text-center p-4 bg-neutral-800 rounded-md border border-lime-400/30">
+              <p className="text-lime-300">
                 You have full administrative access. Manage projects, tasks, and users.
               </p>
             </div>
           )}
           {profile.role === 'manager' && (
-            <div className="text-center p-4 bg-green-50 dark:bg-green-900 rounded-md">
-              <p className="text-green-800 dark:text-green-200">
+            <div className="text-center p-4 bg-neutral-800 rounded-md border border-lime-400/30">
+              <p className="text-lime-300">
                 You are a project manager. Oversee project progress and assign tasks.
               </p>
             </div>
           )}
           {profile.role === 'client' && (
-            <div className="text-center p-4 bg-purple-50 dark:bg-purple-900 rounded-md">
-              <p className="text-purple-800 dark:text-purple-200">
+            <div className="text-center p-4 bg-neutral-800 rounded-md border border-lime-400/30">
+              <p className="text-lime-300">
                 You are a client. View the status of your projects.
               </p>
             </div>

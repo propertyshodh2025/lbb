@@ -21,7 +21,7 @@ const LogoutButton = () => {
   };
 
   return (
-    <Button onClick={handleLogout} variant="destructive">
+    <Button onClick={handleLogout} variant="destructive" className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
       Logout
     </Button>
   );

@@ -12,38 +12,36 @@ const CompleteProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+        <Card className="w-full max-w-md bg-neutral-900 rounded-2xl glass-border">
           <CardHeader>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-8 w-3/4 mb-2 bg-neutral-700" />
+            <Skeleton className="h-4 w-1/2 bg-neutral-700" />
           </CardHeader>
           <CardContent className="space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full bg-neutral-700" />
+            <Skeleton className="h-10 w-full bg-neutral-700" />
+            <Skeleton className="h-10 w-full bg-neutral-700" />
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // If there's no session, redirect to login
   if (!session) {
     return <Navigate to="/login" replace />;
   }
 
-  // If profile exists and has a role, redirect to dashboard
   if (profile && profile.role) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
+      <Card className="w-full max-w-md shadow-lg bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white">Complete Your Profile</CardTitle>
-          <p className="text-lg text-gray-600 dark:text-gray-400">Please provide your basic information to continue.</p>
+          <CardTitle className="text-3xl font-bold text-white/90">Complete Your Profile</CardTitle>
+          <p className="text-lg text-white/70">Please provide your basic information to continue.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <ProfileForm isInitialProfileSetup={true} />

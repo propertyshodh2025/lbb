@@ -98,8 +98,8 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
       showError('Failed to update project.');
     } else {
       showSuccess('Project updated successfully!');
-      onProjectUpdated(); // Notify parent component
-      onClose(); // Close the dialog
+      onProjectUpdated();
+      onClose();
     }
   };
 
@@ -111,11 +111,11 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Project Title</FormLabel>
+              <FormLabel className="text-white/70">Project Title</FormLabel>
               <FormControl>
-                <Input placeholder="Enter project title" {...field} />
+                <Input placeholder="Enter project title" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -124,11 +124,11 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel className="text-white/70">Description</FormLabel>
               <FormControl>
-                <Textarea placeholder="Project description (optional)" {...field} />
+                <Textarea placeholder="Project description (optional)" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-lg" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -137,22 +137,22 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
           name="client_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Client</FormLabel>
+              <FormLabel className="text-white/70">Client</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
+                    <SelectItem key={client.id} value={client.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {client.first_name} {client.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -161,32 +161,33 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
           name="due_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Due Date</FormLabel>
+              <FormLabel className="text-white/70">Due Date</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
                       variant={'outline'}
                       className={cn(
-                        'w-full pl-3 text-left font-normal',
-                        !field.value && 'text-muted-foreground',
+                        'w-full pl-3 text-left font-normal bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full',
+                        !field.value && 'text-white/70',
                       )}
                     >
                       {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50 text-white/70" />
                     </Button>
                   </FormControl>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-neutral-900 text-white/90 border-neutral-800 rounded-2xl" align="start">
                   <Calendar
                     mode="single"
                     selected={field.value || undefined}
                     onSelect={field.onChange}
                     initialFocus
+                    className="bg-neutral-900 text-white/90"
                   />
                 </PopoverContent>
               </Popover>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -195,15 +196,15 @@ const EditProjectForm = ({ projectId, initialData, onProjectUpdated, onClose }: 
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel className="text-white/70">Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Any additional notes (optional)" {...field} />
+                <Textarea placeholder="Any additional notes (optional)" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-lg" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
           Update Project
         </Button>
       </form>

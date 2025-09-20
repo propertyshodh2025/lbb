@@ -30,7 +30,7 @@ const formSchema = z.object({
   project_id: z.string().uuid({ message: 'Please select a project.' }),
   title: z.string().min(1, { message: 'Task title is required.' }),
   assigned_to: z.string().uuid({ message: 'Please select an editor.' }).optional().or(z.literal('')),
-  attachments: z.any().optional(), // For file input
+  attachments: z.any().optional(),
 });
 
 type TaskFormValues = z.infer<typeof formSchema>;
@@ -111,7 +111,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
       return;
     }
 
-    setIsUploading(true); // Start loading for form submission and upload
+    setIsUploading(true);
 
     let attachmentUrls: string[] = [];
     const files = values.attachments instanceof FileList ? Array.from(values.attachments) : [];
@@ -152,7 +152,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
       assigned_to: assignedToUuid,
       status: initialStatus,
       created_by: user.id,
-      attachments: attachmentUrls, // Save attachment URLs
+      attachments: attachmentUrls,
     }).select().single();
 
     if (taskError) {
@@ -178,7 +178,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
         attachments: undefined,
       });
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Clear the file input
+        fileInputRef.current.value = '';
       }
       onTaskAdded();
     }
@@ -193,22 +193,22 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           name="project_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Project</FormLabel>
+              <FormLabel className="text-white/70">Project</FormLabel>
               <Select onValueChange={field.onChange} value={field.value} disabled={!!defaultProjectId || isUploading}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
+                    <SelectItem key={project.id} value={project.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {project.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -217,11 +217,11 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Task Title</FormLabel>
+              <FormLabel className="text-white/70">Task Title</FormLabel>
               <FormControl>
-                <Input placeholder="Enter task title" {...field} disabled={isUploading} />
+                <Input placeholder="Enter task title" {...field} disabled={isUploading} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -230,23 +230,23 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign To (Editor)</FormLabel>
+              <FormLabel className="text-white/70">Assign To (Editor)</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isUploading}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select an editor (optional)" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
+                  <SelectItem value="" className="hover:bg-neutral-800 focus:bg-neutral-800">Unassigned</SelectItem>
                   {editors.map((editor) => (
-                    <SelectItem key={editor.id} value={editor.id}>
+                    <SelectItem key={editor.id} value={editor.id} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {editor.first_name} {editor.last_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -255,7 +255,7 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
           name="attachments"
           render={({ field: { value, onChange, ...fieldProps } }) => (
             <FormItem>
-              <FormLabel>Raw Files (Optional)</FormLabel>
+              <FormLabel className="text-white/70">Raw Files (Optional)</FormLabel>
               <FormControl>
                 <Input
                   {...fieldProps}
@@ -266,13 +266,14 @@ const AddTaskForm = ({ onTaskAdded, defaultProjectId }: AddTaskFormProps) => {
                   }}
                   disabled={isUploading}
                   ref={fileInputRef}
+                  className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full"
                 />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSessionLoading || isUploading}>
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" disabled={isSessionLoading || isUploading}>
           {isUploading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding Task...

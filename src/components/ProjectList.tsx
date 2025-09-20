@@ -6,12 +6,12 @@ import { showError, showSuccess } from '@/utils/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { useSession } from '@/components/SessionContextProvider'; // Import useSession
-import UpdateProjectStatusForm from './UpdateProjectStatusForm'; // Import the new component
-import { Link } from 'react-router-dom'; // Import Link
-import { Button } from '@/components/ui/button'; // Import Button
-import { Trash2, Edit } from 'lucide-react'; // Import Trash2 and Edit icons
-import { // Import AlertDialog components
+import { useSession } from '@/components/SessionContextProvider';
+import UpdateProjectStatusForm from './UpdateProjectStatusForm';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Trash2, Edit } from 'lucide-react';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,14 +23,14 @@ import { // Import AlertDialog components
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Dialog, // Import Dialog components
+  Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import EditProjectForm from '@/components/EditProjectForm'; // Import the new EditProjectForm
+import EditProjectForm from '@/components/EditProjectForm';
 
 interface Project {
   id: string;
@@ -48,17 +48,17 @@ interface Project {
 }
 
 interface ProjectListProps {
-  refreshTrigger?: boolean; // Prop to trigger re-fetch
-  filterByClientId?: string | null; // New prop to filter projects by client ID
-  onProjectUpdated?: () => void; // Callback for when a project is updated
+  refreshTrigger?: boolean;
+  filterByClientId?: string | null;
+  onProjectUpdated?: () => void;
 }
 
 const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated }: ProjectListProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
-  const [currentProjectToEdit, setCurrentProjectToEdit] = useState<Project | null>(null); // State to hold project being edited
-  const { profile, isLoading: isSessionLoading } = useSession(); // Get session and profile
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentProjectToEdit, setCurrentProjectToEdit] = useState<Project | null>(null);
+  const { profile, isLoading: isSessionLoading } = useSession();
 
   const fetchProjects = async () => {
     setIsLoading(true);
@@ -100,17 +100,17 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
       .channel('public:projects')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => {
         console.log('Project change received!', payload);
-        fetchProjects(); // Re-fetch projects on any change
+        fetchProjects();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [refreshTrigger, filterByClientId, isEditDialogOpen]); // Re-fetch when refreshTrigger, filterByClientId, or dialog closes changes
+  }, [refreshTrigger, filterByClientId, isEditDialogOpen]);
 
   const canManageProjects = profile?.role === 'admin' || profile?.role === 'manager';
-  const canDeleteProject = profile?.role === 'admin'; // Only admins can delete projects
+  const canDeleteProject = profile?.role === 'admin';
 
   const handleDeleteProject = async (projectId: string, projectTitle: string) => {
     const { error } = await supabase
@@ -123,7 +123,7 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
       showError(`Failed to delete project "${projectTitle}".`);
     } else {
       showSuccess(`Project "${projectTitle}" deleted successfully!`);
-      onProjectUpdated?.(); // Notify parent to refresh the list
+      onProjectUpdated?.();
     }
   };
 
@@ -133,39 +133,39 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
   };
 
   const handleProjectDetailsUpdated = () => {
-    onProjectUpdated?.(); // Trigger a refresh of the project list
-    setIsEditDialogOpen(false); // Close the dialog
+    onProjectUpdated?.();
+    setIsEditDialogOpen(false);
   };
 
   if (isLoading || isSessionLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
+        <Skeleton className="h-24 w-full bg-neutral-700" />
       </div>
     );
   }
 
   if (projects.length === 0) {
     return (
-      <p className="text-center text-gray-500 dark:text-gray-400">No projects found.</p>
+      <p className="text-center text-white/70">No projects found.</p>
     );
   }
 
   return (
     <div className="space-y-4">
       {projects.map((project) => (
-        <Card key={project.id} className="shadow-sm">
+        <Card key={project.id} className="shadow-sm bg-neutral-900 rounded-2xl glass-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">
-              <Link to={`/projects/${project.id}`} className="hover:underline text-primary dark:text-primary-foreground">
+              <Link to={`/projects/${project.id}`} className="hover:underline text-lime-300">
                 {project.title}
               </Link>
             </CardTitle>
             <div className="flex items-center gap-2">
               {canManageProjects && (
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleEditClick(project)}>
+                <Button variant="outline" size="icon" className="h-8 w-8 bg-neutral-800 text-lime-300 hover:bg-neutral-700 border-neutral-700 rounded-full" onClick={() => handleEditClick(project)}>
                   <Edit className="h-4 w-4" />
                   <span className="sr-only">Edit Project</span>
                 </Button>
@@ -173,22 +173,22 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
               {canDeleteProject && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon" className="h-8 w-8">
+                    <Button variant="destructive" size="icon" className="h-8 w-8 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full">
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete Project</span>
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-white/70">
                         This action cannot be undone. This will permanently delete the project
                         "{project.title}" and all associated tasks and status history.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteProject(project.id, project.title)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      <AlertDialogCancel className="rounded-full bg-neutral-800 text-white/70 hover:bg-neutral-700 border-neutral-700">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteProject(project.id, project.title)} className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90">
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -198,26 +198,26 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-white/70">
               Client: {project.profiles ? `${project.profiles.first_name} ${project.profiles.last_name}` : 'N/A'}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Current Status: <span className="font-medium capitalize">{project.current_status}</span>
+            <p className="text-sm text-white/70">
+              Current Status: <span className="font-medium capitalize text-lime-300">{project.current_status}</span>
             </p>
             {project.due_date && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-white/70">
                 Due: {format(new Date(project.due_date), 'PPP')}
               </p>
             )}
             {project.notes && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">Notes: {project.notes}</p>
+              <p className="text-sm text-white/70">Notes: {project.notes}</p>
             )}
             {canManageProjects && (
               <div className="pt-4">
                 <UpdateProjectStatusForm
                   projectId={project.id}
                   currentStatus={project.current_status}
-                  onStatusUpdated={onProjectUpdated || (() => {})} // Pass callback
+                  onStatusUpdated={onProjectUpdated || (() => {})}
                 />
               </div>
             )}
@@ -227,10 +227,10 @@ const ProjectList = ({ refreshTrigger, filterByClientId = null, onProjectUpdated
 
       {currentProjectToEdit && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
             <DialogHeader>
-              <DialogTitle>Edit Project</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-white/90">Edit Project</DialogTitle>
+              <DialogDescription className="text-white/70">
                 Make changes to the project details here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>

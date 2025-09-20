@@ -39,7 +39,7 @@ interface AddUserFormProps {
 }
 
 const USER_ROLES = ['admin', 'manager', 'editor', 'client'];
-const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu'; // Your Supabase Project ID
+const SUPABASE_PROJECT_ID = 'lzwxlbanmacwhycmvnhu';
 const CREATE_USER_FUNCTION_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/create-user`;
 
 const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
@@ -51,7 +51,7 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
       password: '',
       first_name: '',
       last_name: '',
-      role: 'client', // Default role
+      role: 'client',
     },
   });
 
@@ -66,7 +66,7 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`, // Pass the user's JWT
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(values),
       });
@@ -81,7 +81,7 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
 
       showSuccess('User added successfully!');
       form.reset();
-      onUserAdded(); // Notify parent component to refresh user list
+      onUserAdded();
     } catch (error) {
       console.error('Error invoking create-user Edge Function:', error);
       showError('An unexpected error occurred while adding the user.');
@@ -96,11 +96,11 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-white/70">Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="user@example.com" {...field} />
+                <Input type="email" placeholder="user@example.com" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -109,11 +109,11 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-white/70">Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="********" {...field} />
+                <Input type="password" placeholder="********" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -122,11 +122,11 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
           name="first_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First Name</FormLabel>
+              <FormLabel className="text-white/70">First Name</FormLabel>
               <FormControl>
-                <Input placeholder="John" {...field} />
+                <Input placeholder="John" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -135,11 +135,11 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
           name="last_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Last Name</FormLabel>
+              <FormLabel className="text-white/70">Last Name</FormLabel>
               <FormControl>
-                <Input placeholder="Doe" {...field} />
+                <Input placeholder="Doe" {...field} className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full" />
               </FormControl>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
@@ -148,26 +148,26 @@ const AddUserForm = ({ onUserAdded }: AddUserFormProps) => {
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Role</FormLabel>
+              <FormLabel className="text-white/70">Role</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-neutral-800 text-white/90 border-neutral-700 focus:ring-lime-400 focus:border-lime-400 rounded-full">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="bg-neutral-900 text-white/90 border-neutral-800">
                   {USER_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>
+                    <SelectItem key={role} value={role} className="hover:bg-neutral-800 focus:bg-neutral-800">
                       {role.charAt(0).toUpperCase() + role.slice(1)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage />
+              <FormMessage className="text-destructive-foreground" />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300">
           Add User
         </Button>
       </form>

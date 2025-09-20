@@ -56,15 +56,15 @@ const UserStatsCard = () => {
 
   if (isLoading) {
     return (
-      <Card className="w-full">
+      <Card className="w-full bg-neutral-900 rounded-2xl glass-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <Skeleton className="h-6 w-1/2" />
-          <Skeleton className="h-6 w-6 rounded-full" />
+          <Skeleton className="h-6 w-1/2 bg-neutral-700" />
+          <Skeleton className="h-6 w-6 rounded-full bg-neutral-700" />
         </CardHeader>
         <CardContent className="space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-2/3" />
-          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-3/4 bg-neutral-700" />
+          <Skeleton className="h-4 w-2/3 bg-neutral-700" />
+          <Skeleton className="h-4 w-1/2 bg-neutral-700" />
         </CardContent>
       </Card>
     );
@@ -72,43 +72,43 @@ const UserStatsCard = () => {
 
   if (!roleCounts) {
     return (
-      <Card className="w-full">
+      <Card className="w-full bg-neutral-900 rounded-2xl glass-border">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">User Statistics</CardTitle>
+          <CardTitle className="text-xl font-semibold text-white/90">User Statistics</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-gray-500 dark:text-gray-400">Could not load user statistics.</p>
+          <p className="text-center text-white/70">Could not load user statistics.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-neutral-900 rounded-2xl glass-border">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-semibold">User Statistics</CardTitle>
-        <UsersIcon className="h-6 w-6 text-muted-foreground" />
+        <CardTitle className="text-xl font-semibold text-white/90">User Statistics</CardTitle>
+        <UsersIcon className="h-6 w-6 text-white/70" />
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Users:</p>
-          <Badge variant="secondary" className="text-md">{roleCounts.total}</Badge>
+          <p className="text-sm font-medium text-white/90">Total Users:</p>
+          <Badge variant="secondary" className="text-md bg-lime-400 text-black">{roleCounts.total}</Badge>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Admins:</p>
-          <Badge variant="outline">{roleCounts.admin}</Badge>
+          <p className="text-sm text-white/70">Admins:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.admin}</Badge>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Managers:</p>
-          <Badge variant="outline">{roleCounts.manager}</Badge>
+          <p className="text-sm text-white/70">Managers:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.manager}</Badge>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Editors:</p>
-          <Badge variant="outline">{roleCounts.editor}</Badge>
+          <p className="text-sm text-white/70">Editors:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.editor}</Badge>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Clients:</p>
-          <Badge variant="outline">{roleCounts.client}</Badge>
+          <p className="text-sm text-white/70">Clients:</p>
+          <Badge variant="outline" className="bg-neutral-800 text-lime-300 border-neutral-700">{roleCounts.client}</Badge>
         </div>
       </CardContent>
     </Card>

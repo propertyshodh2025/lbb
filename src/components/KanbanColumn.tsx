@@ -27,19 +27,19 @@ interface KanbanColumnProps {
   color?: string;
 }
 
-const KanbanColumn = ({ id, title, tasks, color = 'bg-gray-50 dark:bg-gray-800' }: KanbanColumnProps) => {
+const KanbanColumn = ({ id, title, tasks, color = 'bg-neutral-900' }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({
     id: id,
   });
 
   return (
-    <Card className={`flex-1 min-w-[280px] max-w-[350px] ${color} flex flex-col`}>
+    <Card className={`flex-1 min-w-[280px] max-w-[350px] ${color} flex flex-col rounded-2xl glass-border`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-200">
+          <CardTitle className="text-sm font-medium text-white/90">
             {title}
           </CardTitle>
-          <Badge variant="secondary" className="ml-2">
+          <Badge variant="secondary" className="ml-2 bg-lime-400 text-black">
             {tasks.length}
           </Badge>
         </div>
@@ -48,7 +48,7 @@ const KanbanColumn = ({ id, title, tasks, color = 'bg-gray-50 dark:bg-gray-800' 
         <div
           ref={setNodeRef}
           className={`space-y-3 p-2 rounded-lg transition-colors min-h-[150px] ${
-            isOver ? 'bg-blue-50 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-700 border-dashed' : 'bg-transparent'
+            isOver ? 'bg-lime-950/30 border-2 border-lime-400/50 border-dashed' : 'bg-transparent'
           }`}
         >
           <SortableContext items={tasks.map(task => task.id)} strategy={verticalListSortingStrategy}>
@@ -57,7 +57,7 @@ const KanbanColumn = ({ id, title, tasks, color = 'bg-gray-50 dark:bg-gray-800' 
             ))}
           </SortableContext>
           {tasks.length === 0 && (
-            <div className="flex items-center justify-center h-24 text-gray-400 text-sm">
+            <div className="flex items-center justify-center h-24 text-white/70 text-sm">
               No tasks
             </div>
           )}
