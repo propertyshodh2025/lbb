@@ -54,7 +54,7 @@ const ClientManagementPage = () => {
                     <PlusCircle className="mr-2 h-4 w-4" /> Add New Client
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800">
+                <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 z-[9999]">
                   <DialogHeader>
                     <DialogTitle className="text-white/90">Add New Client</DialogTitle>
                     <DialogDescription className="text-white/70">
