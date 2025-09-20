@@ -73,8 +73,20 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null); // State to hold user to delete
   const { profile: currentUserProfile, isLoading: isSessionLoading, session } = useSession();
 
+  // --- Debugging Logs ---
+  console.log("UserManagementList Render:");
+  console.log("  isLoading (component):", isLoading);
+  console.log("  isSessionLoading (session context):", isSessionLoading);
+  console.log("  session:", session ? "Exists" : "Null");
+  console.log("  currentUserProfile:", currentUserProfile ? `Exists (Role: ${currentUserProfile.role})` : "Null");
+  // --- End Debugging Logs ---
+
   const canEditUserDetails = !isSessionLoading && currentUserProfile?.role === 'admin';
   const canDeleteUsers = !isSessionLoading && currentUserProfile?.role === 'admin';
+
+  console.log("  canEditUserDetails:", canEditUserDetails);
+  console.log("  canDeleteUsers:", canDeleteUsers);
+
 
   const [selectedRoleFilter, setSelectedRoleFilter] = useState(filterByRole);
   const [sortBy, setSortBy] = useState('first_name');
