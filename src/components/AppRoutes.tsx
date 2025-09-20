@@ -20,6 +20,7 @@ import ProjectsPage from '@/pages/ProjectsPage';
 import CompleteProfilePage from '@/pages/CompleteProfilePage';
 import DevHomePage from '@/pages/DevHomePage';
 import MediaDepartmentPage from '@/pages/MediaDepartmentPage'; // New Media Department Page
+import { useSession } from '@/components/SessionContextProvider'; // <--- Added this import
 
 // Define routes with their allowed roles
 const routesConfig = [
