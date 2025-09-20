@@ -319,7 +319,7 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
       {/* Edit Dialog */}
       {currentUserToEdit && ( // Only render if there's a user to edit
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 z-[9999]">
+          <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 sm:max-w-[425px] max-h-[90vh] overflow-y-auto bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 z-50">
             <DialogHeader>
               <DialogTitle className="text-white/90">Edit User Profile</DialogTitle>
               <DialogDescription className="text-white/70">
@@ -345,7 +345,7 @@ const UserManagementList = ({ refreshTrigger, filterByRole = 'all', hideFilters 
       {/* Delete Alert Dialog */}
       {userToDelete && ( // Only render if there's a user to delete
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent className="bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 max-h-[90vh] overflow-y-auto z-[9999]">
+          <AlertDialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-neutral-900 text-white/90 rounded-2xl glass-border border-neutral-800 max-h-[90vh] overflow-y-auto z-50">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-white/90">Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription className="text-white/70">
