@@ -64,17 +64,12 @@ const AdminDashboard = () => {
               to="/admin/departments/media"
             />
             <DepartmentCard
-              title="Human Resources"
-              description="Manage employee profiles, roles, and team onboarding."
+              title="User Management" // Renamed from Human Resources
+              description="Manage all employee and client profiles, roles, and team onboarding." // Updated description
               icon={Users}
               to="/users"
             />
-            <DepartmentCard
-              title="Client Management"
-              description="View and add new client accounts."
-              icon={UserRound} // Using UserRound icon for Client Management
-              to="/admin/clients"
-            />
+            {/* Removed the old Client Management card */}
             <DepartmentCard
               title="Operations"
               description="Access overall project statistics, administrative tasks, and system settings."

@@ -22,20 +22,20 @@ const navItems: NavItem[] = [
   { to: '/admin', label: 'Departments', icon: Building2, roles: ['admin'] }, // New Admin Dashboard (Office View)
   { to: '/admin/overview', label: 'Admin Overview', icon: LayoutDashboard, roles: ['admin'] }, // Old Admin Dashboard content
   { to: '/admin/departments/media', label: 'Media Production', icon: Briefcase, roles: ['admin', 'manager'] },
+  { to: '/admin/departments/media/clients', label: 'Media Clients', icon: UserRound, roles: ['admin', 'manager'] }, // New Media Client Management Page
   { to: '/admin/departments/tech', label: 'Tech Department', icon: Code, roles: ['admin', 'manager'] },
   { to: '/admin/departments/finance', label: 'Finance Department', icon: DollarSign, roles: ['admin', 'manager'] },
   { to: '/admin/departments/legal', label: 'Legal Department', icon: Scale, roles: ['admin', 'manager'] },
   { to: '/admin/departments/sales', label: 'Sales Department', icon: TrendingUp, roles: ['admin', 'manager'] },
   { to: '/admin/departments/marketing', label: 'Marketing Department', icon: Megaphone, roles: ['admin', 'manager'] },
   { to: '/admin/departments/research', label: 'R&D Department', icon: FlaskConical, roles: ['admin', 'manager'] }, // New R&D Department
-  { to: '/admin/clients', label: 'Client Management', icon: UserRound, roles: ['admin', 'manager'] }, // New Client Management Page
   { to: '/manager', label: 'Manager Dashboard', icon: FolderKanban, roles: ['admin', 'manager'] },
   { to: '/editor', label: 'Editor Dashboard', icon: FileText, roles: ['admin', 'manager', 'editor'] },
-  { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client'] },
+  { to: '/client', label: 'My Projects', icon: FolderKanban, roles: ['admin', 'client', 'media_client'] }, // Added media_client
   { to: '/projects', label: 'Projects', icon: Briefcase, roles: ['admin', 'manager'] },
   { to: '/tasks', label: 'Tasks', icon: ListChecks, roles: ['admin', 'manager', 'editor'] },
   { to: '/users', label: 'User Management', icon: Users, roles: ['admin'] },
-  { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client'] },
+  { to: '/profile', label: 'My Profile', icon: UserCircle, roles: ['admin', 'manager', 'editor', 'client', 'media_client'] },
 ];
 
 const NavLink = ({ to, children, className, onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: () => void }) => (

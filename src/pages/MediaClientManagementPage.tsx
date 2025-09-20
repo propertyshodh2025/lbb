@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const ClientManagementPage = () => {
+const MediaClientManagementPage = () => {
   const { profile, isLoading } = useSession();
   const [userListRefreshTrigger, setUserListRefreshTrigger] = useState(false);
 
@@ -56,25 +56,25 @@ const ClientManagementPage = () => {
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" asChild className="text-lime-300 hover:text-lime-400">
-              <Link to="/admin" className="flex items-center">
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back to Departments
+              <Link to="/admin/departments/media" className="flex items-center">
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back to Media Department
               </Link>
             </Button>
             <CardTitle className="text-3xl font-bold text-white/90 text-center flex-grow">
-              Client Management
+              Media Client Management
             </CardTitle>
             <div className="w-10" /> {/* Spacer to balance the back button */}
           </div>
-          <p className="text-lg text-white/70 text-center">Manage your client accounts.</p>
+          <p className="text-lg text-white/70 text-center">Manage clients specific to the Media Production department.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
-            <h3 className="text-xl font-semibold mb-4 text-white/90">Add New Client</h3>
-            <AddUserForm onUserAdded={handleUserAdded} defaultRole="client" hideRoleSelection={true} />
+            <h3 className="text-xl font-semibold mb-4 text-white/90">Add New Media Client</h3>
+            <AddUserForm onUserAdded={handleUserAdded} defaultRole="media_client" hideRoleSelection={true} />
           </div>
           <div className="p-6 border border-neutral-800 rounded-2xl bg-neutral-900 glass-border">
-            <h3 className="text-xl font-semibold mb-4 text-white/90">Existing Clients</h3>
-            <UserManagementList refreshTrigger={userListRefreshTrigger} filterByRole="client" hideFilters={true} />
+            <h3 className="text-xl font-semibold mb-4 text-white/90">Existing Media Clients</h3>
+            <UserManagementList refreshTrigger={userListRefreshTrigger} filterByRole="media_client" hideFilters={true} />
           </div>
         </CardContent>
       </Card>
@@ -82,4 +82,4 @@ const ClientManagementPage = () => {
   );
 };
 
-export default ClientManagementPage;
+export default MediaClientManagementPage;

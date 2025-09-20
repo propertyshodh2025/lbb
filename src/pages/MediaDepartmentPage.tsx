@@ -7,8 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import OrgHierarchy from '@/components/OrgHierarchy';
 import WorkOverviewCards from '@/components/WorkOverviewCards';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, UserRound } from 'lucide-react'; // Import UserRound for Media Client Management
 import { Button } from '@/components/ui/button';
+import DepartmentCard from '@/components/DepartmentCard'; // Import DepartmentCard
 
 const MediaDepartmentPage = () => {
   const { profile, isLoading } = useSession();
@@ -72,6 +73,12 @@ const MediaDepartmentPage = () => {
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-white/90">Work Overview</h3>
               <WorkOverviewCards />
+              <DepartmentCard
+                title="Media Clients"
+                description="Manage clients specifically for media production projects."
+                icon={UserRound}
+                to="/admin/departments/media/clients"
+              />
             </div>
 
             {/* Right Side: Organizational Hierarchy */}

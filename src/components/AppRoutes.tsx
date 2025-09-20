@@ -26,13 +26,13 @@ import LegalDepartmentPage from '@/pages/LegalDepartmentPage'; // New Legal Depa
 import SalesDepartmentPage from '@/pages/SalesDepartmentPage'; // New Sales Department Page
 import MarketingDepartmentPage from '@/pages/MarketingDepartmentPage'; // New Marketing Department Page
 import ResearchDepartmentPage from '@/pages/ResearchDepartmentPage'; // New Research & Development Department Page
-import ClientManagementPage from '@/pages/ClientManagementPage'; // New Client Management Page
+import MediaClientManagementPage from '@/pages/MediaClientManagementPage'; // Renamed Client Management Page
 import { useSession } from '@/components/SessionContextProvider';
 
 // Define routes with their allowed roles
 const routesConfig = [
-  { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
-  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client'] },
+  { path: "/profile", element: <ProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client', 'media_client'] },
+  { path: "/complete-profile", element: <CompleteProfilePage />, allowedRoles: ['admin', 'manager', 'editor', 'client', 'media_client'] },
   { path: "/projects/:id", element: <ProjectDetailsPage />, allowedRoles: ['admin', 'manager'] },
   { path: "/tasks/:id", element: <TaskDetailsPage />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/admin", element: <AdminDashboard />, allowedRoles: ['admin'] }, // New Admin Dashboard (Office View)
@@ -44,7 +44,7 @@ const routesConfig = [
   { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Sales Department Page
   { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Marketing Department Page
   { path: "/admin/departments/research", element: <ResearchDepartmentPage />, allowedRoles: ['admin', 'manager'] }, // Research & Development Department Page
-  { path: "/admin/clients", element: <ClientManagementPage />, allowedRoles: ['admin', 'manager'] }, // New Client Management Page
+  { path: "/admin/departments/media/clients", element: <MediaClientManagementPage />, allowedRoles: ['admin', 'manager'] }, // New Media Client Management Page
   { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] },
   { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] },
   { path: "/client", element: <ClientDashboard />, allowedRoles: ['client', 'admin'] },
@@ -54,7 +54,7 @@ const routesConfig = [
 ];
 
 interface AppRoutesProps {
-  onSelectDevRole: (role: 'admin' | 'manager' | 'editor' | 'client') => void;
+  onSelectDevRole: (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => void;
 }
 
 const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
@@ -70,7 +70,7 @@ const AppRoutes = ({ onSelectDevRole }: AppRoutesProps) => {
       {showDevHomePage ? (
         <Route path="/" element={<DevHomePage onSelectRole={onSelectDevRole} />} />
       ) : (
-        <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor', 'client']}><RoleBasedRedirect /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'manager', 'editor', 'client', 'media_client']}><RoleBasedRedirect /></ProtectedRoute>} />
       )}
       {routesConfig.map((route, index) => (
         <Route

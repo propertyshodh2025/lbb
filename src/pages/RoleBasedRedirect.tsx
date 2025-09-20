@@ -38,6 +38,7 @@ const RoleBasedRedirect = () => {
           navigate('/editor');
           break;
         case 'client':
+        case 'media_client': // Both client and media_client go to /client dashboard
           console.log("RoleBasedRedirect: Navigating to /client.");
           navigate('/client');
           break;

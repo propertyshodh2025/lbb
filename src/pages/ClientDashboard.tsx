@@ -37,7 +37,7 @@ const ClientDashboard = () => {
 
   useEffect(() => {
     const fetchClientTasks = async () => {
-      if (!user?.id || profile?.role !== 'client') {
+      if (!user?.id || (!['client', 'media_client'].includes(profile?.role || ''))) {
         setIsTasksLoading(false);
         setClientTasks([]);
         return;
@@ -138,7 +138,7 @@ const ClientDashboard = () => {
     );
   }
 
-  if (profile?.role !== 'client' && profile?.role !== 'admin') {
+  if (!['client', 'media_client', 'admin'].includes(profile?.role || '')) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-neutral-950">
         <Card className="w-full max-w-md text-center bg-neutral-900 rounded-2xl glass-border">

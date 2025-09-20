@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 // Removed useNavigate as direct navigation will be handled by SessionContextProvider and RoleBasedRedirect
 
 interface DevHomePageProps {
-  onSelectRole: (role: 'admin' | 'manager' | 'editor' | 'client') => void;
+  onSelectRole: (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => void;
 }
 
 const DevHomePage = ({ onSelectRole }: DevHomePageProps) => {
-  const handleRoleSelect = (role: 'admin' | 'manager' | 'editor' | 'client') => {
+  const handleRoleSelect = (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => {
     console.log(`DevHomePage: Selected role: ${role}`);
     onSelectRole(role);
     // Removed explicit navigate calls.
@@ -39,6 +39,9 @@ const DevHomePage = ({ onSelectRole }: DevHomePageProps) => {
           </Button>
           <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('client')}>
             Login as Client
+          </Button>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('media_client')}>
+            Login as Media Client
           </Button>
           <div className="pt-4 text-center">
             <p className="text-sm text-white/70">

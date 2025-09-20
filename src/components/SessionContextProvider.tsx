@@ -25,7 +25,7 @@ const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 interface SessionContextProviderProps {
   children: React.ReactNode;
-  devRole: 'admin' | 'manager' | 'editor' | 'client' | null; // New prop
+  devRole: 'admin' | 'manager' | 'editor' | 'client' | 'media_client' | null; // New prop
 }
 
 export const SessionContextProvider = ({ children, devRole }: SessionContextProviderProps) => {
@@ -79,7 +79,7 @@ export const SessionContextProvider = ({ children, devRole }: SessionContextProv
       if (isMounted) setIsLoading(false);
     };
 
-    const setupDevSession = (role: 'admin' | 'manager' | 'editor' | 'client') => {
+    const setupDevSession = (role: 'admin' | 'manager' | 'editor' | 'client' | 'media_client') => {
       setIsLoading(false);
       const mockUserId = `dev-user-${role}-id`; // Consistent mock ID
       const mockEmail = `${role}@example.com`;
