@@ -28,21 +28,21 @@ const DevHomePage = ({ onSelectRole }: DevHomePageProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('admin')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('admin')}>
             Login as Admin
           </Button>
-          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('manager')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('manager')}>
             Login as Manager
           </Button>
-          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('editor')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('editor')}>
             Login as Editor
           </Button>
-          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300" onClick={() => handleRoleSelect('client')}>
+          <Button className="w-full rounded-full bg-lime-400 px-6 text-black hover:bg-lime-300 relative z-10" onClick={() => handleRoleSelect('client')}>
             Login as Client
           </Button>
           <div className="pt-4 text-center">
             <p className="text-sm text-white/70">
-              Or <a href="/login" className="text-lime-300 hover:underline">use actual login</a>
+              Or <a href="/login" className="text-lime-300 hover:underline relative z-10">use actual login</a>
             </p>
           </div>
         </CardContent>
