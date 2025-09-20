@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon, Building2, FlaskConical } from 'lucide-react'; // Import Building2 icon and FlaskConical
+import { Menu, Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ListChecks, Briefcase, Sun, Moon, Building2, FlaskConical, Code, DollarSign, Scale, TrendingUp, Megaphone } from 'lucide-react'; // Import Building2 icon and FlaskConical
 import { cn } from '@/lib/utils';
 import UserNav from './UserNav';
 import { useTheme } from '@/contexts/ThemeContext';

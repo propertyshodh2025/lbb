@@ -5,7 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/components/SessionContextProvider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks, Briefcase, Building2, FlaskConical } from 'lucide-react'; // Import Building2 for departments and FlaskConical
+import { Home, LayoutDashboard, Users, FolderKanban, FileText, UserCircle, ChevronLeft, ChevronRight, ListChecks, Briefcase, Building2, FlaskConical, Code, DollarSign, Scale, TrendingUp, Megaphone } from 'lucide-react'; // Import Building2 for departments and FlaskConical
 import UserNav from './UserNav';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
