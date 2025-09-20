@@ -99,12 +99,7 @@ const AdminDashboard = () => {
               icon={TrendingUp}
               to="/admin/departments/sales"
             />
-            <DepartmentCard
-              title="Sales Manager Management" // New card for Sales Manager Management
-              description="Manage sales managers, warriors, and deal closers."
-              icon={Handshake}
-              to="/admin/departments/sales-management"
-            />
+            {/* Removed Sales Manager Management card */}
             <DepartmentCard
               title="Marketing Department"
               description="Plan campaigns, analyze market trends, and manage brand presence."

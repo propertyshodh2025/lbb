@@ -21,7 +21,7 @@ const navItems: NavItem[] = [
   { to: '/admin', label: 'Departments', icon: Building2, roles: ['admin'] },
   { to: '/admin/overview', label: 'Admin Overview', icon: LayoutDashboard, roles: ['admin'] },
   { to: '/admin/departments/media', label: 'Media Production', icon: Briefcase, roles: ['admin', 'manager'] },
-  { to: '/admin/departments/sales-management', label: 'Sales Management', icon: Handshake, roles: ['admin', 'manager'] }, // New Sales Management Page
+  // Removed Sales Management Page from navItems
   { to: '/admin/departments/tech', label: 'Tech Department', icon: Code, roles: ['admin', 'manager'] },
   { to: '/admin/departments/finance', label: 'Finance Department', icon: DollarSign, roles: ['admin', 'manager'] },
   { to: '/admin/departments/legal', label: 'Legal Department', icon: Scale, roles: ['admin', 'manager'] },

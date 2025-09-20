@@ -26,7 +26,6 @@ import LegalDepartmentPage from '@/pages/LegalDepartmentPage'; // New Legal Depa
 import SalesDepartmentPage from '@/pages/SalesDepartmentPage'; // New Sales Department Page
 import MarketingDepartmentPage from '@/pages/MarketingDepartmentPage'; // New Marketing Department Page
 import ResearchDepartmentPage from '@/pages/ResearchDepartmentPage'; // New Research & Development Department Page
-import SalesManagerManagementPage from '@/pages/SalesManagerManagementPage'; // Renamed Client Management Page
 import SalesManagerDashboard from '@/pages/SalesManagerDashboard'; // New Sales Manager Dashboard
 import WarriorDashboard from '@/pages/WarriorDashboard'; // New Warrior Dashboard
 import DealCloserDashboard from '@/pages/DealCloserDashboard'; // New Deal Closer Dashboard
@@ -50,7 +49,7 @@ const routesConfig = [
   { path: "/admin/departments/sales", element: <SalesDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Sales Department Page
   { path: "/admin/departments/marketing", element: <MarketingDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Marketing Department Page
   { path: "/admin/departments/research", element: <ResearchDepartmentPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // Research & Development Department Page
-  { path: "/admin/departments/sales-management", element: <SalesManagerManagementPage />, allowedRoles: ['admin', 'manager'] as UserRole[] }, // New Sales Manager Management Page
+  // Removed SalesManagerManagementPage route
   { path: "/manager", element: <ManagerDashboard />, allowedRoles: ['admin', 'manager'] as UserRole[] },
   { path: "/editor", element: <EditorDashboard />, allowedRoles: ['admin', 'manager', 'editor'] as UserRole[] },
   { path: "/sales-manager-dashboard", element: <SalesManagerDashboard />, allowedRoles: ['admin', 'sales_manager'] as UserRole[] }, // New Sales Manager Dashboard
